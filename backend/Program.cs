@@ -1,20 +1,36 @@
 using Microsoft.EntityFrameworkCore;
-using Models;
-using Repositories;
+using Stash.Models;
+using Stash.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddDbContext<TodoContext>(opt =>
-    opt.UseInMemoryDatabase("TodoList"));
 
-// Register the repository
-builder.Services.AddScoped<ITodoItemRepository, TodoItemRepository>();
+// Register DbContext
+builder.Services.AddDbContext<StashContext>(opt =>
+    opt.UseInMemoryDatabase("StashDatabase"));
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Register Repositories
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+
+// Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Allow CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowAnyOrigin(); // For localhost only. Allow all
+    });
+});
 
 var app = builder.Build();
 
@@ -22,10 +38,15 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Stash API V1");
+    });
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
