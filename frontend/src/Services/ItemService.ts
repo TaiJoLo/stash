@@ -4,7 +4,7 @@ import config from "../Config";
 const { apiUrl } = config;
 
 export const getItems = async (): Promise<Items[]> => {
-  const response = await fetch(`${apiUrl}/api/item`);
+  const response = await fetch(`${apiUrl}/api/items`);
   if (!response.ok) {
     throw new Error("Failed to fetch items");
   }
@@ -13,7 +13,7 @@ export const getItems = async (): Promise<Items[]> => {
 };
 
 export const createItem = async (item: Omit<Items, "id">): Promise<Items> => {
-  const response = await fetch(`${apiUrl}/api/item`, {
+  const response = await fetch(`${apiUrl}/api/items`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export const createItem = async (item: Omit<Items, "id">): Promise<Items> => {
 };
 
 export const updateItem = async (id: number, item: Items): Promise<void> => {
-  const response = await fetch(`${apiUrl}/api/item/${id}`, {
+  const response = await fetch(`${apiUrl}/api/items/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -41,7 +41,7 @@ export const updateItem = async (id: number, item: Items): Promise<void> => {
 };
 
 export const deleteItem = async (id: number): Promise<void> => {
-  const response = await fetch(`${apiUrl}/api/item/${id}`, {
+  const response = await fetch(`${apiUrl}/api/items/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) {
