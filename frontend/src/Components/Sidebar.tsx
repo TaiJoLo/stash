@@ -1,58 +1,106 @@
 import React from "react";
 import {
-  Drawer,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
   Typography,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import { Inventory, Category, Storage } from "@mui/icons-material";
+import { Inventory, Category, Storage, Add } from "@mui/icons-material";
+import { NavLink } from "react-router-dom";
 
 interface SidebarProps {
-  open: boolean;
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+  const handleLinkClick = () => {
+    if (isSmallScreen) {
+      onClose();
+    }
+  };
+
   return (
-    <Drawer
-      variant="temporary"
-      open={open}
-      onClose={onClose}
-      ModalProps={{
-        keepMounted: true, // Better open performance on mobile.
-      }}
-      sx={{
-        "& .MuiDrawer-paper": { boxSizing: "border-box", width: 240 },
-      }}
-    >
+    <div style={{ width: 240 }}>
       <div style={{ padding: "16px" }}>
         <Typography variant="h6" noWrap>
           Stash
         </Typography>
       </div>
       <List>
-        <ListItem button>
+        <ListItem
+          button
+          component={NavLink}
+          to="/items"
+          onClick={handleLinkClick}
+        >
           <ListItemIcon>
             <Inventory />
           </ListItemIcon>
           <ListItemText primary="Item" />
         </ListItem>
-        <ListItem button>
+        <ListItem
+          button
+          component={NavLink}
+          to="/categories"
+          onClick={handleLinkClick}
+        >
           <ListItemIcon>
             <Category />
           </ListItemIcon>
           <ListItemText primary="Category" />
         </ListItem>
-        <ListItem button>
+        <ListItem
+          button
+          component={NavLink}
+          to="/stocks"
+          onClick={handleLinkClick}
+        >
           <ListItemIcon>
             <Storage />
           </ListItemIcon>
           <ListItemText primary="Stock" />
         </ListItem>
+        <ListItem
+          button
+          component={NavLink}
+          to="/items/new"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <Add />
+          </ListItemIcon>
+          <ListItemText primary="Add Item" />
+        </ListItem>
+        <ListItem
+          button
+          component={NavLink}
+          to="/stocks/new"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <Add />
+          </ListItemIcon>
+          <ListItemText primary="Add Stock" />
+        </ListItem>
+        <ListItem
+          button
+          component={NavLink}
+          to="/categories/new"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <Add />
+          </ListItemIcon>
+          <ListItemText primary="Add Category" />
+        </ListItem>
       </List>
-    </Drawer>
+    </div>
   );
 };
 
