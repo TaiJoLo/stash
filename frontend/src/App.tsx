@@ -1,7 +1,7 @@
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "./Components/MainLayout";
-import ItemForm from "./Components/ItemForm";
+import ProductForm from "./Components/ProductForm";
 import SimpleTestComponent from "./Components/SimpleTestComponent";
 import ItemList from "./Components/ItemList";
 import CategoryList from "./Components/CategoryList";
@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<SimpleTestComponent />} />
           <Route path="/items" element={<ItemList />} />
-          <Route path="/items/new" element={<ItemForm />} />
+          <Route path="/items/new" element={<ProductForm />} />
           <Route path="/categories" element={<CategoryList />} />
           <Route path="/categories/new" element={<CategoryForm />} />
           <Route path="/stocks" element={<StockList />} />
