@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <ListItem
           button
           component={NavLink}
-          to="/items"
+          to="/products"
           onClick={handleLinkClick}
         >
           <ListItemIcon>
@@ -69,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <ListItem
           button
           component={NavLink}
-          to="/items/new"
+          to="/products/new"
           onClick={handleLinkClick}
         >
           <ListItemIcon>

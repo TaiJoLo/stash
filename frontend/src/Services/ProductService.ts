@@ -1,4 +1,4 @@
-import { Product } from "../Models/Items";
+import { Product } from "../Models/Product";
 import config from "../Config";
 
 const { apiUrl } = config;
