@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { getItems, createItem } from "../Services/ItemService";
-import { Items } from "../Models/Items";
+import { Product } from "../Models/Items";
 
 const SimpleTestComponent: React.FC = () => {
-  const [items, setItems] = useState<Items[]>([]);
+  const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [newItemName, setNewItemName] = useState<string>("");
 
@@ -28,7 +28,7 @@ const SimpleTestComponent: React.FC = () => {
       return;
     }
 
-    const newItem: Omit<Items, "id"> = {
+    const newItem: Omit<Product, "id"> = {
       name: newItemName,
       categoryId: 1, // Example category ID, adjust as necessary
       pictureUrl: "http://example.com/image.jpg", // Example picture URL
@@ -49,7 +49,7 @@ const SimpleTestComponent: React.FC = () => {
 
   return (
     <div>
-      <h1>Item List</h1>
+      <h1>Product List</h1>
       <ul>
         {items.map((item) => (
           <li key={item.id}>{item.name}</li>
@@ -61,7 +61,7 @@ const SimpleTestComponent: React.FC = () => {
         onChange={(e) => setNewItemName(e.target.value)}
         placeholder="New item name"
       />
-      <button onClick={handleAddItem}>Add Item</button>
+      <button onClick={handleAddItem}>Add Product</button>
     </div>
   );
 };

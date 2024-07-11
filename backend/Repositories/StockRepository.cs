@@ -16,12 +16,12 @@ namespace Stash.Repositories
 
         public async Task<IEnumerable<Stock>> GetAllStocksAsync()
         {
-            return await _context.Stocks.Include(s => s.Item).ToListAsync();
+            return await _context.Stocks.Include(s => s.Product).ToListAsync();
         }
 
         public async Task<Stock?> GetStockByIdAsync(int id)
         {
-            return await _context.Stocks.Include(s => s.Item).FirstOrDefaultAsync(s => s.Id == id);
+            return await _context.Stocks.Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task<Stock> AddStockAsync(Stock stock)

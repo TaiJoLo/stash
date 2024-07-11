@@ -6,17 +6,18 @@ using System.Threading.Tasks;
 
 namespace Stash.Controllers
 {
-    [Route("api/[controller]")]
+
     [ApiController]
-    public class CategoriesController : ControllerBase
+    [Route("api/categories")]
+    public class CategoryController : ControllerBase
     {
         private readonly ICategoryRepository _categoryRepository;
 
-        public CategoriesController(ICategoryRepository categoryRepository)
+        public CategoryController(ICategoryRepository categoryRepository)
         {
             _categoryRepository = categoryRepository;
         }
-
+        // GET: api/categories
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
@@ -24,6 +25,7 @@ namespace Stash.Controllers
             return Ok(categories);
         }
 
+        // GET: api/categories/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Category>> GetCategory(int id)
         {
@@ -35,6 +37,7 @@ namespace Stash.Controllers
             return Ok(category);
         }
 
+        // POST: api/categories
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
@@ -42,6 +45,7 @@ namespace Stash.Controllers
             return CreatedAtAction(nameof(GetCategory), new { id = createdCategory.Id }, createdCategory);
         }
 
+        // PUT: api/categories/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, Category category)
         {
@@ -54,6 +58,7 @@ namespace Stash.Controllers
             return NoContent();
         }
 
+        // DELETE: api/categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {

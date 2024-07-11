@@ -1,9 +1,9 @@
-import { Items } from "../Models/Items";
+import { Product } from "../Models/Items";
 import config from "../Config";
 
 const { apiUrl } = config;
 
-export const getItems = async (): Promise<Items[]> => {
+export const getItems = async (): Promise<Product[]> => {
   const response = await fetch(`${apiUrl}/api/items`);
   if (!response.ok) {
     throw new Error("Failed to fetch items");
@@ -12,7 +12,9 @@ export const getItems = async (): Promise<Items[]> => {
   return data;
 };
 
-export const createItem = async (item: Omit<Items, "id">): Promise<Items> => {
+export const createItem = async (
+  item: Omit<Product, "id">
+): Promise<Product> => {
   const response = await fetch(`${apiUrl}/api/items`, {
     method: "POST",
     headers: {
@@ -27,7 +29,7 @@ export const createItem = async (item: Omit<Items, "id">): Promise<Items> => {
   return data;
 };
 
-export const updateItem = async (id: number, item: Items): Promise<void> => {
+export const updateItem = async (id: number, item: Product): Promise<void> => {
   const response = await fetch(`${apiUrl}/api/items/${id}`, {
     method: "PUT",
     headers: {

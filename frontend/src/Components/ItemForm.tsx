@@ -22,7 +22,7 @@ const ItemForm: React.FC = () => {
   return (
     <Container>
       <Paper elevation={3} style={{ padding: "16px", marginTop: "16px" }}>
-        <Typography variant="h6">Item Form</Typography>
+        <Typography variant="h6">Product Form</Typography>
         <form noValidate autoComplete="off" onSubmit={handleSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12}>

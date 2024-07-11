@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <ListItemIcon>
             <Inventory />
           </ListItemIcon>
-          <ListItemText primary="Item" />
+          <ListItemText primary="Product" />
         </ListItem>
         <ListItem
           button
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <ListItemIcon>
             <Add />
           </ListItemIcon>
-          <ListItemText primary="Add Item" />
+          <ListItemText primary="Add Product" />
         </ListItem>
         <ListItem
           button

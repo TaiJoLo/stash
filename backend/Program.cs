@@ -12,7 +12,7 @@ builder.Services.AddDbContext<StashContext>(opt =>
     opt.UseInMemoryDatabase("StashDatabase"));
 
 // Register Repositories
-builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
 

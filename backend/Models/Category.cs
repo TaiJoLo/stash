@@ -6,8 +6,8 @@ namespace Stash.Models
     {
         public int Id { get; set; }
         public required string Name { get; set; }
-
+        
         [JsonIgnore]
-        public ICollection<Item> Items { get; set; } = new List<Item>();
+        public ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }

@@ -1,18 +1,19 @@
+using System;
 using System.Text.Json.Serialization;
 
 namespace Stash.Models
 {
     public class Stock
-    {
-        public int Id { get; set; }
-        public required string Location { get; set; }
-        public int Quantity { get; set; }
-        public DateTime ExpiryDate { get; set; }
-        public decimal Price { get; set; }
-        public DateTime RecordCreatedDate { get; set; }
-        
-        [JsonIgnore]
-        public int ItemId { get; set; }
-        public required Item Item { get; set; }
-    }
+{
+    public int Id { get; set; }
+    public int ProductId { get; set; } // Foreign key to Product
+
+    public int Amount { get; set; }
+    public DateTime PurchaseDate { get; set; }
+    public DateTime DueDate { get; set; }
+    public string? Location { get; set; }
+
+    // Navigation property if needed
+    public virtual Product? Product { get; set; }
+}
 }
