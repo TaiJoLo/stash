@@ -15,6 +15,8 @@ builder.Services.AddDbContext<StashContext>(opt =>
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<IParentProductRepository, ParentProductRepository>();
+
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
