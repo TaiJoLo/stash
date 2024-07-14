@@ -5,4 +5,5 @@ export interface Product {
   categoryId?: number;
   parentProductId?: number;
   defaultLocation: string;
+  parentProduct?: string;
 }

@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Product } from "../Models/Product";
+import { ParentProduct } from "../Models/ParentProduct";
 
 interface HeadCell {
   id: keyof Product;
@@ -24,6 +25,7 @@ const headCells: HeadCell[] = [
   { id: "name", numeric: false, label: "Name" },
   { id: "categoryId", numeric: true, label: "Category" },
   { id: "defaultLocation", numeric: false, label: "Default Location" },
+  { id: "parentProductId", numeric: false, label: "Parent Product" },
 ];
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -57,9 +59,34 @@ const ProductList: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5248/api/products");
-        const data = await response.json();
-        setProducts(data);
+        const productsResponse = await fetch(
+          "http://localhost:5248/api/products"
+        );
+        const productsData = await productsResponse.json();
+
+        const parentProductIds = productsData.map(
+          (product: Product) => product.parentProductId
+        );
+        const parentProductsResponse = await fetch(
+          "http://localhost:5248/api/parentproducts?id=" +
+            parentProductIds.join(",")
+        );
+        const parentProductsData = await parentProductsResponse.json();
+
+        const productsWithParentProducts = productsData.map(
+          (product: Product) => {
+            const parentProduct = parentProductsData.find(
+              (parentProduct: ParentProduct) =>
+                parentProduct.id === product.parentProductId
+            );
+            return {
+              ...product,
+              parentProduct: parentProduct ? parentProduct.name : "",
+            };
+          }
+        );
+
+        setProducts(productsWithParentProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -131,6 +158,8 @@ const ProductList: React.FC = () => {
                     <TableCell>{product.name}</TableCell>
                     <TableCell align="right">{product.categoryId}</TableCell>
                     <TableCell>{product.defaultLocation}</TableCell>
+                    <TableCell>{product.parentProduct}</TableCell>{" "}
+                    {/* Display Parent Product */}
                   </TableRow>
                 ))}
             </TableBody>
