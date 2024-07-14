@@ -158,8 +158,7 @@ const ProductList: React.FC = () => {
                     <TableCell>{product.name}</TableCell>
                     <TableCell align="right">{product.categoryId}</TableCell>
                     <TableCell>{product.defaultLocation}</TableCell>
-                    <TableCell>{product.parentProduct}</TableCell>{" "}
-                    {/* Display Parent Product */}
+                    <TableCell>{product.parentProduct}</TableCell>
                   </TableRow>
                 ))}
             </TableBody>
