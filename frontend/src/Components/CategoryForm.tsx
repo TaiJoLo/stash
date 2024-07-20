@@ -1,66 +1,66 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
   Button,
-  Container,
-  Paper,
-  Typography,
-  Grid,
 } from "@mui/material";
+import { Category } from "../Models/Category";
 
-const CategoryForm: React.FC = () => {
-  const [name, setName] = React.useState("");
-  const [description, setDescription] = React.useState("");
+interface CategoryFormProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (category: Category) => void;
+  category?: Category | null;
+}
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    // Handle form submission logic
+const CategoryForm: React.FC<CategoryFormProps> = ({
+  open,
+  onClose,
+  onSave,
+  category,
+}) => {
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (category) {
+      setName(category.name);
+    }
+  }, [category]);
+
+  const handleSave = () => {
+    onSave({ id: category ? category.id : 0, name });
   };
 
   return (
-    <Container>
-      <Paper elevation={3} style={{ padding: "16px", marginTop: "16px" }}>
-        <Typography variant="h6">Category Form</Typography>
-        <form noValidate autoComplete="off" onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                required
-                id="name"
-                name="name"
-                label="Name"
-                fullWidth
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                id="description"
-                name="description"
-                label="Description"
-                fullWidth
-                multiline
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} style={{ textAlign: "right" }}>
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                style={{ marginRight: "8px" }}
-              >
-                Submit
-              </Button>
-              <Button variant="contained">Cancel</Button>
-            </Grid>
-          </Grid>
-        </form>
-      </Paper>
-    </Container>
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>
+        {category ? "Edit Category" : "Add New Category"}
+      </DialogTitle>
+      <DialogContent style={{ marginTop: "20px" }}>
+        <TextField
+          autoFocus
+          margin="dense"
+          id="name"
+          label="Category Name"
+          type="text"
+          fullWidth
+          variant="outlined"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancel
+        </Button>
+        <Button onClick={handleSave} color="primary">
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
