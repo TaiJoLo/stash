@@ -34,6 +34,7 @@ const ParentProductForm: React.FC<ParentProductFormProps> = ({
 
   const handleSave = () => {
     onSave({ id: parentProduct ? parentProduct.id : 0, name });
+    setName(""); // Reset field after save
   };
 
   return (
