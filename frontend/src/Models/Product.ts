@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   pictureUrl?: string;
   categoryId: number;
-  defaultLocation: string;
+  locationId: number;
   parentProductId: number;
   parentProduct?: string;
 }

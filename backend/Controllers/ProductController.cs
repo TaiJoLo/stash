@@ -44,9 +44,10 @@ namespace Stash.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-            if (string.IsNullOrEmpty(product.DefaultLocation))
+            if (product.LocationId == null)
             {
-                product.DefaultLocation = "Default Location"; // Set default if not provided
+                // Handle case where LocationId is not provided
+                return BadRequest("LocationId is required");
             }
 
             await _productRepository.AddProductAsync(product);
@@ -73,11 +74,9 @@ namespace Stash.Controllers
                 // Update fields
                 existingProduct.Name = product.Name;
                 existingProduct.CategoryId = product.CategoryId;
-                existingProduct.DefaultLocation = string.IsNullOrEmpty(product.DefaultLocation)
-                    ? "Default Location"
-                    : product.DefaultLocation;
+                existingProduct.LocationId = product.LocationId ?? existingProduct.LocationId;
                 existingProduct.ParentProductId = product.ParentProductId;
-                
+
                 await _productRepository.UpdateProductAsync(existingProduct);
                 return NoContent();
             }

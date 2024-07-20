@@ -16,7 +16,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
 builder.Services.AddScoped<IParentProductRepository, ParentProductRepository>();
-
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();

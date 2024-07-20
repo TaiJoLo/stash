@@ -8,7 +8,7 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
-import { Inventory, Category, Storage, AccountTree } from "@mui/icons-material";
+import { Inventory, Category, Storage, LocationOn } from "@mui/icons-material";
 import { NavLink } from "react-router-dom";
 
 interface SidebarProps {
@@ -73,9 +73,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           onClick={handleLinkClick}
         >
           <ListItemIcon>
-            <AccountTree />
+            <Inventory />
           </ListItemIcon>
-          <ListItemText primary="Parent Products" />
+          <ListItemText primary="Parent Product" />
+        </ListItem>
+        <ListItem
+          button
+          component={NavLink}
+          to="/locations"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <LocationOn />
+          </ListItemIcon>
+          <ListItemText primary="Location" />
         </ListItem>
       </List>
     </div>

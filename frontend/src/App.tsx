@@ -5,6 +5,7 @@ import ProductList from "./Components/ProductList";
 import CategoryList from "./Components/CategoryList";
 import StockList from "./Components/StockList";
 import ParentProductList from "./Components/ParentProductList";
+import LocationList from "./Components/LocationList";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/categories" element={<CategoryList />} />
           <Route path="/stocks" element={<StockList />} />
           <Route path="/parent-products" element={<ParentProductList />} />
+          <Route path="/locations" element={<LocationList />} />
         </Routes>
       </MainLayout>
     </Router>

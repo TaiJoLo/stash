@@ -10,13 +10,19 @@ namespace Stash.Models
         public DbSet<Product> Products { get; set; }
         public DbSet<ParentProduct> ParentProducts { get; set; }
         public DbSet<Stock> Stocks { get; set; }
+        public DbSet<Location> Locations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Category>().ToTable("Category");
+            modelBuilder.Entity<Category>()
+                .ToTable("Category")
+                .Property(c => c.Name)
+                .HasColumnType("varchar(255)");
+
             modelBuilder.Entity<Product>().ToTable("Product");
             modelBuilder.Entity<ParentProduct>().ToTable("ParentProduct");
             modelBuilder.Entity<Stock>().ToTable("Stock");
+            modelBuilder.Entity<Location>().ToTable("Location");
 
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
@@ -30,8 +36,14 @@ namespace Stash.Models
 
             modelBuilder.Entity<Stock>()
                 .HasOne(s => s.Product)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(s => s.ProductId)
+                .IsRequired();
+
+            modelBuilder.Entity<Stock>()
+                .HasOne(s => s.Location)
+                .WithMany()
+                .HasForeignKey(s => s.LocationId)
                 .IsRequired();
         }
     }
