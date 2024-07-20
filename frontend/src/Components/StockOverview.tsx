@@ -15,12 +15,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TableSortLabel,
 } from "@mui/material";
 import { Product } from "../Models/Product";
 import { Stock } from "../Models/Stock";
 import { Location } from "../Models/Location";
-import { Details as DetailsIcon } from "@mui/icons-material";
+import { Info as InfoIcon } from "@mui/icons-material";
 import StockDetails from "./StockDetails";
+
+type Order = "asc" | "desc";
 
 const StockOverview: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,6 +33,8 @@ const StockOverview: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [order, setOrder] = useState<Order>("asc");
+  const [orderBy, setOrderBy] = useState<keyof Product | "amount">("name");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,6 +79,27 @@ const StockOverview: React.FC = () => {
     setSelectedProduct(null);
   };
 
+  const handleRequestSort = (property: keyof Product | "amount") => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  const sortedProducts = products.slice().sort((a, b) => {
+    if (orderBy === "name") {
+      return (
+        (a[orderBy] as string).localeCompare(b[orderBy] as string) *
+        (order === "asc" ? 1 : -1)
+      );
+    } else {
+      const aAmount =
+        groupedStocks[a.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
+      const bAmount =
+        groupedStocks[b.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
+      return (aAmount - bAmount) * (order === "asc" ? 1 : -1);
+    }
+  });
+
   return (
     <Container>
       <Typography variant="h6" gutterBottom>
@@ -83,13 +109,29 @@ const StockOverview: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Product</TableCell>
-              <TableCell>Total Amount</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "name"}
+                  direction={orderBy === "name" ? order : "asc"}
+                  onClick={() => handleRequestSort("name")}
+                >
+                  Product
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "amount"}
+                  direction={orderBy === "amount" ? order : "asc"}
+                  onClick={() => handleRequestSort("amount")}
+                >
+                  Total Amount
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => {
+            {sortedProducts.map((product) => {
               const productStocks = groupedStocks[product.id] || [];
               const totalAmount = productStocks.reduce(
                 (sum, stock) => sum + stock.amount,
@@ -101,7 +143,7 @@ const StockOverview: React.FC = () => {
                   <TableCell>{totalAmount}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleDetailsClick(product)}>
-                      <DetailsIcon />
+                      <InfoIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
