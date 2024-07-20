@@ -1,9 +1,8 @@
 export interface Product {
   id: number;
   name: string;
-  pictureUrl?: string;
-  categoryId?: number;
-  parentProductId?: number;
+  categoryId: number;
   defaultLocation: string;
+  parentProductId: number | null;
   parentProduct?: string;
 }

@@ -10,7 +10,7 @@ namespace Stash.Models
         public string? PictureUrl { get; set; }
         public int? CategoryId { get; set; }
         public int? ParentProductId { get; set; }
-        public required string DefaultLocation { get; set; }
+        public string? DefaultLocation { get; set; }
 
         [JsonIgnore]
         public Category? Category { get; set; }

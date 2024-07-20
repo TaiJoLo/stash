@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Stash.Models;
@@ -43,6 +44,11 @@ namespace Stash.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
+            if (string.IsNullOrEmpty(product.DefaultLocation))
+            {
+                product.DefaultLocation = "Default Location"; // Set default if not provided
+            }
+
             await _productRepository.AddProductAsync(product);
             return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
         }
@@ -51,19 +57,36 @@ namespace Stash.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
-            if (id != product.Id)
+            try
             {
-                return BadRequest();
-            }
+                if (id != product.Id)
+                {
+                    return BadRequest("Product ID mismatch");
+                }
 
-            var existingProduct = await _productRepository.GetProductByIdAsync(id);
-            if (existingProduct == null)
+                var existingProduct = await _productRepository.GetProductByIdAsync(id);
+                if (existingProduct == null)
+                {
+                    return NotFound("Product not found");
+                }
+
+                // Update fields
+                existingProduct.Name = product.Name;
+                existingProduct.CategoryId = product.CategoryId;
+                existingProduct.DefaultLocation = string.IsNullOrEmpty(product.DefaultLocation)
+                    ? "Default Location"
+                    : product.DefaultLocation;
+                existingProduct.ParentProductId = product.ParentProductId;
+                
+                await _productRepository.UpdateProductAsync(existingProduct);
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                // Log the exception
+                Console.Error.WriteLine($"Error updating product: {ex.Message}");
+                return StatusCode(500, "Internal server error");
             }
-
-            await _productRepository.UpdateProductAsync(product);
-            return NoContent();
         }
 
         // DELETE: api/products/5
