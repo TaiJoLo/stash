@@ -17,13 +17,18 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   MenuItem,
+  FormControl,
   Select,
   InputLabel,
-  FormControl,
+  TextField,
 } from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import ProductForm from "./ProductForm";
 import { Product } from "../Models/Product";
 import { ParentProduct } from "../Models/ParentProduct";
 import { Category } from "../Models/Category";
@@ -75,6 +80,7 @@ const ProductList: React.FC = () => {
   // State for edit dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -154,39 +160,73 @@ const ProductList: React.FC = () => {
     setEditProduct(null);
   };
 
-  const handleEditSave = async () => {
-    if (editProduct) {
-      console.log("editProduct before PUT", editProduct);
-      try {
-        const response = await fetch(
-          `http://localhost:5248/api/products/${editProduct.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(editProduct),
-          }
-        );
-
-        if (!response.ok) {
-          const text = await response.text();
-          console.error("Error response text:", text);
-          throw new Error(`HTTP error! status: ${response.status}`);
+  const handleEditSave = async (product: Product) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5248/api/products/${product.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(product),
         }
+      );
 
-        const productsResponse = await fetch(
-          "http://localhost:5248/api/products"
-        );
-        const updatedProductsData = await productsResponse.json();
-        console.log("Updated products data:", updatedProductsData);
-        setProducts(updatedProductsData);
-
-        setEditDialogOpen(false);
-        setEditProduct(null);
-      } catch (error) {
-        console.error("Error updating product:", error);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error response text:", text);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const productsResponse = await fetch(
+        "http://localhost:5248/api/products"
+      );
+      const updatedProductsData = await productsResponse.json();
+      setProducts(updatedProductsData);
+
+      setEditDialogOpen(false);
+      setEditProduct(null);
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
+  };
+
+  const handleFormOpen = () => {
+    setFormOpen(true);
+    setEditProduct(null);
+  };
+
+  const handleFormClose = () => {
+    setFormOpen(false);
+  };
+
+  const handleFormSave = async (product: Product) => {
+    const method = product.id ? "PUT" : "POST";
+    const url = product.id
+      ? `http://localhost:5248/api/products/${product.id}`
+      : "http://localhost:5248/api/products";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const updatedProducts = await fetch(
+        "http://localhost:5248/api/products"
+      ).then((res) => res.json());
+      setProducts(updatedProducts);
+      handleFormClose();
+    } catch (error) {
+      console.error("Error saving product:", error);
     }
   };
 
@@ -195,6 +235,15 @@ const ProductList: React.FC = () => {
       <Typography variant="h6" gutterBottom>
         Products List
       </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        onClick={handleFormOpen}
+        style={{ marginBottom: "16px" }}
+      >
+        Add Product
+      </Button>
       <Paper>
         <TableContainer>
           <Table>
@@ -281,7 +330,17 @@ const ProductList: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Dialog */}
+      {/* Product Form Dialog */}
+      <ProductForm
+        open={formOpen}
+        onClose={handleFormClose}
+        onSave={handleFormSave}
+        product={editProduct}
+        categories={categories}
+        parentProducts={parentProducts}
+      />
+
+      {/* Edit Product Dialog */}
       <Dialog open={editDialogOpen} onClose={handleEditClose}>
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>
@@ -304,15 +363,11 @@ const ProductList: React.FC = () => {
               <FormControl fullWidth margin="dense">
                 <InputLabel>Category</InputLabel>
                 <Select
-                  value={
-                    editProduct.categoryId !== undefined
-                      ? editProduct.categoryId
-                      : ""
-                  }
+                  value={editProduct.categoryId || ""}
                   onChange={(e) =>
                     setEditProduct({
                       ...editProduct,
-                      categoryId: e.target.value as number,
+                      categoryId: Number(e.target.value),
                     })
                   }
                 >
@@ -339,20 +394,9 @@ const ProductList: React.FC = () => {
               <FormControl fullWidth margin="dense">
                 <InputLabel>Parent Product</InputLabel>
                 <Select
-                  value={
-                    editProduct.parentProductId !== undefined
-                      ? editProduct.parentProductId
-                      : ""
-                  }
+                  value={editProduct.parentProductId || ""}
                   onChange={(e) => {
-                    const selectedParentProductId = e.target.value as number;
-                    const selectedParentProduct = parentProducts.find(
-                      (p) => p.id === selectedParentProductId
-                    );
-                    console.log(
-                      "Selected Parent Product:",
-                      selectedParentProduct
-                    );
+                    const selectedParentProductId = Number(e.target.value);
                     setEditProduct({
                       ...editProduct,
                       parentProductId: selectedParentProductId,
@@ -376,7 +420,7 @@ const ProductList: React.FC = () => {
           <Button
             onClick={() => {
               if (editProduct) {
-                handleEditSave();
+                handleEditSave(editProduct);
               }
             }}
             color="primary"
