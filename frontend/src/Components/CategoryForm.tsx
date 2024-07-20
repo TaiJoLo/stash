@@ -27,15 +27,27 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   useEffect(() => {
     if (category) {
       setName(category.name);
+    } else {
+      resetForm();
     }
   }, [category]);
 
+  const resetForm = () => {
+    setName("");
+  };
+
   const handleSave = () => {
     onSave({ id: category ? category.id : 0, name });
+    handleClose();
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle>
         {category ? "Edit Category" : "Add New Category"}
       </DialogTitle>
@@ -53,7 +65,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
         <Button onClick={handleSave} color="primary">

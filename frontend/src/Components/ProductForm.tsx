@@ -45,8 +45,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setCategoryId(product.categoryId || 0);
       setDefaultLocation(product.defaultLocation || "");
       setParentProductId(product.parentProductId || 0);
+    } else {
+      resetForm();
     }
   }, [product]);
+
+  const resetForm = () => {
+    setName("");
+    setPictureUrl("");
+    setCategoryId(0);
+    setDefaultLocation("");
+    setParentProductId(0);
+  };
 
   const handleSubmit = () => {
     if (!name || !categoryId || !defaultLocation) {
@@ -64,13 +74,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
     };
 
     onSave(updatedProduct);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle>{product ? "Edit Product" : "Add Product"}</DialogTitle>
       <DialogContent>
         <TextField
+          autoFocus
           margin="dense"
           label="Name"
           fullWidth
@@ -119,7 +136,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button onClick={handleSubmit} color="primary">
           Save
         </Button>
