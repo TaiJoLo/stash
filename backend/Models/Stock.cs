@@ -9,11 +9,12 @@ namespace Stash.Models
         public int ProductId { get; set; } // Foreign key to Product
         public int LocationId { get; set; } // Foreign key to Location
         public int Amount { get; set; }
-        public DateTime PurchaseDate { get; set; }
-        public DateTime DueDate { get; set; }
+        public DateTime? PurchaseDate { get; set; }
+        public DateTime? DueDate { get; set; }
 
         // Navigation properties
-        public virtual required Product Product { get; set; }
+        [JsonIgnore]
+        public virtual Product? Product { get; set; }
         public virtual Location? Location { get; set; }
     }
 }

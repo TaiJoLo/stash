@@ -10,16 +10,13 @@ namespace Stash.Models
         public string? PictureUrl { get; set; }
         public int? CategoryId { get; set; }
         public int? ParentProductId { get; set; }
-        public int? LocationId { get; set; }
+        
 
         [JsonIgnore]
         public Category? Category { get; set; }
         
         [JsonIgnore]
         public ParentProduct? ParentProduct { get; set; }
-        
-        [JsonIgnore]
-        public Location? Location { get; set; }
 
         [JsonIgnore]
         public ICollection<Stock> Stocks { get; set; } = new List<Stock>();

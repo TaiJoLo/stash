@@ -11,10 +11,12 @@ namespace Stash.Controllers
     public class StockController : ControllerBase
     {
         private readonly IStockRepository _stockRepository;
+        private readonly IProductRepository _productRepository;
 
-        public StockController(IStockRepository stockRepository)
+        public StockController(IStockRepository stockRepository, IProductRepository productRepository)
         {
             _stockRepository = stockRepository;
+            _productRepository = productRepository;
         }
 
         // GET: api/stocks
@@ -41,6 +43,13 @@ namespace Stash.Controllers
         [HttpPost]
         public async Task<ActionResult<Stock>> PostStock(Stock stock)
         {
+            var product = await _productRepository.GetProductByIdAsync(stock.ProductId);
+            if (product == null)
+            {
+                return BadRequest("Invalid ProductId");
+            }
+
+            stock.Product = product;
             await _stockRepository.AddStockAsync(stock);
             return CreatedAtAction(nameof(GetStock), new { id = stock.Id }, stock);
         }
@@ -60,7 +69,20 @@ namespace Stash.Controllers
                 return NotFound();
             }
 
-            await _stockRepository.UpdateStockAsync(stock);
+            var product = await _productRepository.GetProductByIdAsync(stock.ProductId);
+            if (product == null)
+            {
+                return BadRequest("Invalid ProductId");
+            }
+
+            existingStock.ProductId = stock.ProductId;
+            existingStock.LocationId = stock.LocationId;
+            existingStock.Amount = stock.Amount;
+            existingStock.PurchaseDate = stock.PurchaseDate;
+            existingStock.DueDate = stock.DueDate;
+            existingStock.Product = product;
+
+            await _stockRepository.UpdateStockAsync(existingStock);
             return NoContent();
         }
 

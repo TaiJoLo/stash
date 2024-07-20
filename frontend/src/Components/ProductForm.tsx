@@ -14,7 +14,6 @@ import {
 import { Product } from "../Models/Product";
 import { Category } from "../Models/Category";
 import { ParentProduct } from "../Models/ParentProduct";
-import { Location } from "../Models/Location";
 
 interface ProductFormProps {
   open: boolean;
@@ -23,7 +22,6 @@ interface ProductFormProps {
   product: Product | null;
   categories: Category[];
   parentProducts: ParentProduct[];
-  locations: Location[]; // Add locations prop
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
@@ -33,12 +31,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
   product,
   categories,
   parentProducts,
-  locations, // Add locations prop
 }) => {
   const [name, setName] = useState("");
   const [pictureUrl, setPictureUrl] = useState("");
   const [categoryId, setCategoryId] = useState<number>(0);
-  const [locationId, setLocationId] = useState<number>(0); // Change to locationId
   const [parentProductId, setParentProductId] = useState<number>(0);
 
   useEffect(() => {
@@ -46,7 +42,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setName(product.name || "");
       setPictureUrl(product.pictureUrl || "");
       setCategoryId(product.categoryId || 0);
-      setLocationId(product.locationId || 0); // Change to locationId
       setParentProductId(product.parentProductId || 0);
     } else {
       resetForm();
@@ -57,13 +52,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setName("");
     setPictureUrl("");
     setCategoryId(0);
-    setLocationId(0); // Change to locationId
     setParentProductId(0);
   };
 
   const handleSubmit = () => {
-    if (!name || !categoryId || !locationId) {
-      // Change to locationId
+    if (!name || !categoryId) {
       alert("Please fill out all required fields");
       return;
     }
@@ -73,7 +66,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
       name,
       pictureUrl,
       categoryId,
-      locationId, // Change to locationId
       parentProductId,
     };
 
@@ -114,19 +106,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
             {categories.map((category) => (
               <MenuItem key={category.id} value={category.id}>
                 {category.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Location</InputLabel>
-          <Select
-            value={locationId} // Change to locationId
-            onChange={(e) => setLocationId(Number(e.target.value))} // Change to locationId
-          >
-            {locations.map((location) => (
-              <MenuItem key={location.id} value={location.id}>
-                {location.name}
               </MenuItem>
             ))}
           </Select>

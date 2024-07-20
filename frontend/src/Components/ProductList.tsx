@@ -32,7 +32,6 @@ import ProductForm from "./ProductForm";
 import { Product } from "../Models/Product";
 import { ParentProduct } from "../Models/ParentProduct";
 import { Category } from "../Models/Category";
-import { Location } from "../Models/Location"; // Import the Location model
 
 interface HeadCell {
   id: keyof Product;
@@ -43,7 +42,6 @@ interface HeadCell {
 const headCells: HeadCell[] = [
   { id: "name", numeric: false, label: "Name" },
   { id: "categoryId", numeric: false, label: "Category" },
-  { id: "locationId", numeric: false, label: "Location" }, // Change to locationId
   { id: "parentProductId", numeric: false, label: "Parent Product" },
 ];
 
@@ -72,7 +70,6 @@ const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [parentProducts, setParentProducts] = useState<ParentProduct[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]); // Add locations state
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Product>("name");
   const [page, setPage] = useState(0);
@@ -107,13 +104,6 @@ const ProductList: React.FC = () => {
         const parentProductsData = await parentProductsResponse.json();
         console.log("Fetched Parent Products: ", parentProductsData);
         setParentProducts(parentProductsData);
-
-        const locationsResponse = await fetch(
-          "http://localhost:5248/api/locations"
-        );
-        const locationsData = await locationsResponse.json();
-        console.log("Fetched Locations: ", locationsData);
-        setLocations(locationsData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -291,11 +281,6 @@ const ProductList: React.FC = () => {
                         ?.name || ""}
                     </TableCell>
                     <TableCell>
-                      {locations.find((loc) => loc.id === product.locationId)
-                        ?.name || ""}{" "}
-                      {/* Change to locationId */}
-                    </TableCell>
-                    <TableCell>
                       {parentProducts.find(
                         (p) => p.id === product.parentProductId
                       )?.name || ""}
@@ -354,7 +339,6 @@ const ProductList: React.FC = () => {
         product={editProduct}
         categories={categories}
         parentProducts={parentProducts}
-        locations={locations} // Pass locations to ProductForm
       />
 
       {/* Edit Product Dialog */}
@@ -391,25 +375,6 @@ const ProductList: React.FC = () => {
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth margin="dense">
-                <InputLabel>Location</InputLabel>
-                <Select
-                  value={editProduct.locationId || ""} // Change to locationId
-                  onChange={(e) => {
-                    const selectedLocationId = Number(e.target.value);
-                    setEditProduct({
-                      ...editProduct,
-                      locationId: selectedLocationId, // Change to locationId
-                    });
-                  }}
-                >
-                  {locations.map((location) => (
-                    <MenuItem key={location.id} value={location.id}>
-                      {location.name}
                     </MenuItem>
                   ))}
                 </Select>
