@@ -1,34 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TextField,
   Button,
   Container,
   Paper,
   Typography,
+  MenuItem,
   Grid,
   Autocomplete,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
-import { Product } from "../Models/Product";
-import { ParentProduct } from "../Models/ParentProduct";
 
-interface ProductFormProps {
-  onProductAdded?: () => void;
+interface ParentProduct {
+  id: number;
+  name: string;
+  inputValue?: string; // Add optional inputValue for custom options
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ onProductAdded }) => {
+interface Product {
+  id: number;
+  name: string;
+  pictureUrl?: string;
+  categoryId?: number;
+  defaultLocation: string;
+  parentProductId?: number;
+}
+
+const ProductForm: React.FC = () => {
   const [name, setName] = useState("");
   const [pictureUrl, setPictureUrl] = useState("");
-  const [category, setCategory] = useState<string | number>("");
-  const [defaultLocation, setDefaultLocation] = useState("");
-  const [parentProduct, setParentProduct] = useState<ParentProduct | null>(
-    null
-  );
+  const [category, setCategory] = useState("1");
+  const [defaultLocation, setDefaultLocation] = useState("1");
   const [parentProducts, setParentProducts] = useState<ParentProduct[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  const [selectedParentProduct, setSelectedParentProduct] =
+    useState<ParentProduct | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newParentProductName, setNewParentProductName] = useState("");
 
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const locations = [
+    { value: "1", label: "Location 1" },
+    { value: "2", label: "Location 2" },
+    { value: "3", label: "Location 3" },
+  ];
 
   useEffect(() => {
     const fetchParentProducts = async () => {
@@ -36,81 +59,96 @@ const ProductForm: React.FC<ProductFormProps> = ({ onProductAdded }) => {
         const response = await fetch(
           "http://localhost:5248/api/parentproducts"
         );
-        const data: ParentProduct[] = await response.json();
+        const data = await response.json();
         setParentProducts(data);
-        console.log("Fetched parent products:", data); // Log fetched parent products
       } catch (error) {
         console.error("Error fetching parent products:", error);
       }
     };
 
-    const fetchProduct = async () => {
-      if (id) {
-        try {
-          const response = await fetch(
-            `http://localhost:5248/api/products/${id}`
-          );
-          const data: Product = await response.json();
-          setName(data.name);
-          setPictureUrl(data.pictureUrl || "");
-          setCategory(data.categoryId || "");
-          setDefaultLocation(data.defaultLocation);
-          const selectedParentProduct = data.parentProductId
-            ? parentProducts.find((pp) => pp.id === data.parentProductId) ||
-              null
-            : null;
-          setParentProduct(selectedParentProduct);
-          console.log("Fetched product:", data); // Log fetched product
-          console.log("Selected parent product:", selectedParentProduct); // Log selected parent product
-        } catch (error) {
-          console.error("Error fetching product:", error);
-        }
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:5248/api/products");
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
       }
     };
 
-    fetchParentProducts().then(fetchProduct);
-  }, [id]);
+    fetchParentProducts();
+    fetchProducts();
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
-    const product: Partial<Product> = {
+    const product = {
       name,
       pictureUrl,
-      categoryId: category ? parseInt(category as string) : undefined,
+      categoryId: parseInt(category),
       defaultLocation,
-      parentProductId: parentProduct?.id,
+      parentProductId: selectedParentProduct ? selectedParentProduct.id : null,
     };
 
-    try {
-      const response = await fetch(
-        `http://localhost:5248/api/products${id ? `/${id}` : ""}`,
-        {
-          method: id ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(product),
-        }
-      );
+    console.log("Submitting product:", product);
 
-      if (response.ok) {
-        if (onProductAdded) onProductAdded();
-        navigate("/products");
-      } else {
-        console.error("Error saving product:", response.statusText);
+    try {
+      const response = await fetch("http://localhost:5248/api/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
+
+      const data = await response.json();
+      setMessage("Product added successfully!");
+      setError("");
+      setProducts([...products, data]);
+      console.log("Response:", data);
     } catch (error) {
-      console.error("Error saving product:", error);
+      setMessage("");
+      setError("Failed to add product. Please try again.");
+      console.error("Error:", error);
     }
+  };
+
+  const handleAddParentProduct = async () => {
+    setOpenDialog(false);
+    try {
+      const response = await fetch("http://localhost:5248/api/parentproducts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newParentProductName }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add parent product");
+      }
+
+      const newParentProduct = await response.json();
+      setParentProducts((prev) => [...prev, newParentProduct]);
+      setSelectedParentProduct(newParentProduct);
+    } catch (error) {
+      console.error("Error adding parent product:", error);
+      setError("Failed to add parent product");
+    }
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
   };
 
   return (
     <Container>
       <Paper elevation={3} style={{ padding: "16px", marginTop: "16px" }}>
-        <Typography variant="h6">
-          {id ? "Edit Product" : "Product Form"}
-        </Typography>
+        <Typography variant="h6">Product Form</Typography>
         <form noValidate autoComplete="off" onSubmit={handleSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -136,6 +174,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onProductAdded }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
+                required
                 id="category"
                 name="category"
                 label="Category"
@@ -155,34 +194,73 @@ const ProductForm: React.FC<ProductFormProps> = ({ onProductAdded }) => {
                 id="defaultLocation"
                 name="defaultLocation"
                 label="Default Location"
+                select
                 fullWidth
                 value={defaultLocation}
                 onChange={(e) => setDefaultLocation(e.target.value)}
-              />
+              >
+                {locations.map((location) => (
+                  <MenuItem key={location.value} value={location.value}>
+                    {location.label}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
               <Autocomplete
-                id="parentProduct"
-                value={parentProduct}
-                onChange={(_event, newValue) => {
-                  setParentProduct(newValue);
-                  console.log("Selected new parent product:", newValue); // Log selected new parent product
-                }}
-                inputValue={inputValue}
-                onInputChange={(_event, newInputValue) =>
-                  setInputValue(newInputValue)
-                }
+                freeSolo
                 options={parentProducts}
-                getOptionLabel={(option) =>
-                  typeof option === "string" ? option : option.name
-                }
+                getOptionLabel={(option) => {
+                  // Value selected with enter, right from the input
+                  if (typeof option === "string") {
+                    return option;
+                  }
+                  // Add "xxx" option created dynamically
+                  if (option.inputValue) {
+                    return option.inputValue;
+                  }
+                  // Regular option
+                  return option.name;
+                }}
+                value={selectedParentProduct}
+                onChange={(_event, newValue) => {
+                  if (typeof newValue === "string") {
+                    setNewParentProductName(newValue);
+                    setOpenDialog(true);
+                  } else if (newValue && newValue.inputValue) {
+                    setNewParentProductName(newValue.inputValue);
+                    setOpenDialog(true);
+                  } else {
+                    setSelectedParentProduct(newValue);
+                  }
+                }}
+                filterOptions={(options, params) => {
+                  const filtered = options.filter((option) =>
+                    option.name
+                      .toLowerCase()
+                      .includes(params.inputValue.toLowerCase())
+                  );
+
+                  // Suggest the creation of a new value
+                  if (params.inputValue !== "") {
+                    filtered.push({
+                      id: -1,
+                      name: `Add "${params.inputValue}"`,
+                      inputValue: params.inputValue,
+                    });
+                  }
+
+                  return filtered;
+                }}
                 renderInput={(params) => (
                   <TextField {...params} label="Parent Product" fullWidth />
                 )}
-                freeSolo
                 renderOption={(props, option) => (
-                  <li {...props}>
-                    {typeof option === "string" ? option : option.name}
+                  <li
+                    {...props}
+                    key={option.id !== -1 ? option.id : option.inputValue}
+                  >
+                    {option.id === -1 ? <em>{option.name}</em> : option.name}
                   </li>
                 )}
               />
@@ -196,13 +274,53 @@ const ProductForm: React.FC<ProductFormProps> = ({ onProductAdded }) => {
               >
                 Submit
               </Button>
-              <Button variant="contained" onClick={() => navigate("/products")}>
-                Cancel
-              </Button>
+              <Button variant="contained">Cancel</Button>
             </Grid>
           </Grid>
         </form>
+        {message && (
+          <Typography
+            variant="body1"
+            style={{ color: "green", marginTop: "16px" }}
+          >
+            {message}
+          </Typography>
+        )}
+        {error && (
+          <Typography
+            variant="body1"
+            style={{ color: "red", marginTop: "16px" }}
+          >
+            {error}
+          </Typography>
+        )}
       </Paper>
+      <List>
+        {products.map((product) => (
+          <ListItem key={product.id}>
+            <ListItemText
+              primary={product.name}
+              secondary={`Category: ${product.categoryId}, Picture URL: ${product.pictureUrl}, Default Location: ${product.defaultLocation}, Parent Product: ${product.parentProductId}`}
+            />
+          </ListItem>
+        ))}
+      </List>
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>Confirm Add Parent Product</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Do you want to add a new parent product: "{newParentProductName}"?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddParentProduct} color="primary">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
