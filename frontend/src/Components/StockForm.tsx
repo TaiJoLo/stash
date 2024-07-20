@@ -39,6 +39,7 @@ const StockForm: React.FC<StockFormProps> = ({
     stock?.locationId || ""
   );
   const [amount, setAmount] = useState<number>(stock?.amount || 1); // Default to 1
+  const [unitPrice, setUnitPrice] = useState<number>(stock?.unitPrice || 0); // Add unit price state
   const [purchaseDate, setPurchaseDate] = useState<string | null>(
     stock?.purchaseDate ? stock.purchaseDate.substring(0, 10) : null
   );
@@ -51,6 +52,7 @@ const StockForm: React.FC<StockFormProps> = ({
       setProductId(stock.productId);
       setLocationId(stock.locationId);
       setAmount(stock.amount);
+      setUnitPrice(stock.unitPrice); // Set unit price
       setPurchaseDate(
         stock.purchaseDate ? stock.purchaseDate.substring(0, 10) : null
       );
@@ -64,6 +66,7 @@ const StockForm: React.FC<StockFormProps> = ({
     setProductId("");
     setLocationId("");
     setAmount(1);
+    setUnitPrice(0); // Reset unit price
     setPurchaseDate(null);
     setDueDate(null);
   };
@@ -81,6 +84,7 @@ const StockForm: React.FC<StockFormProps> = ({
       productId: Number(productId),
       locationId: Number(locationId),
       amount,
+      unitPrice, // Add unit price to new stock object
       purchaseDate: purchaseDate ? new Date(purchaseDate).toISOString() : null,
       dueDate: dueDate ? new Date(dueDate).toISOString() : null,
     };
@@ -133,6 +137,14 @@ const StockForm: React.FC<StockFormProps> = ({
           type="number"
           value={amount}
           onChange={(e) => setAmount(Number(e.target.value))}
+        />
+        <TextField
+          margin="dense"
+          label="Unit Price"
+          fullWidth
+          type="number"
+          value={unitPrice}
+          onChange={(e) => setUnitPrice(Number(e.target.value))}
         />
         <TextField
           margin="dense"

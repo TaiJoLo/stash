@@ -9,6 +9,7 @@ namespace Stash.Models
         public int ProductId { get; set; } // Foreign key to Product
         public int LocationId { get; set; } // Foreign key to Location
         public int Amount { get; set; }
+        public decimal UnitPrice { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public DateTime? DueDate { get; set; }
 

@@ -34,7 +34,9 @@ const StockOverview: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [order, setOrder] = useState<Order>("asc");
-  const [orderBy, setOrderBy] = useState<keyof Product | "amount">("name");
+  const [orderBy, setOrderBy] = useState<keyof Product | "amount" | "value">(
+    "name"
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +81,7 @@ const StockOverview: React.FC = () => {
     setSelectedProduct(null);
   };
 
-  const handleRequestSort = (property: keyof Product | "amount") => {
+  const handleRequestSort = (property: keyof Product | "amount" | "value") => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
@@ -91,12 +93,24 @@ const StockOverview: React.FC = () => {
         (a[orderBy] as string).localeCompare(b[orderBy] as string) *
         (order === "asc" ? 1 : -1)
       );
-    } else {
+    } else if (orderBy === "amount") {
       const aAmount =
         groupedStocks[a.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
       const bAmount =
         groupedStocks[b.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
       return (aAmount - bAmount) * (order === "asc" ? 1 : -1);
+    } else {
+      const aValue =
+        groupedStocks[a.id]?.reduce(
+          (sum, stock) => sum + stock.amount * stock.unitPrice,
+          0
+        ) || 0;
+      const bValue =
+        groupedStocks[b.id]?.reduce(
+          (sum, stock) => sum + stock.amount * stock.unitPrice,
+          0
+        ) || 0;
+      return (aValue - bValue) * (order === "asc" ? 1 : -1);
     }
   });
 
@@ -127,6 +141,15 @@ const StockOverview: React.FC = () => {
                   Total Amount
                 </TableSortLabel>
               </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "value"}
+                  direction={orderBy === "value" ? order : "asc"}
+                  onClick={() => handleRequestSort("value")}
+                >
+                  Total Value
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -137,10 +160,15 @@ const StockOverview: React.FC = () => {
                 (sum, stock) => sum + stock.amount,
                 0
               );
+              const totalValue = productStocks.reduce(
+                (sum, stock) => sum + stock.amount * stock.unitPrice,
+                0
+              );
               return (
                 <TableRow key={product.id}>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{totalAmount}</TableCell>
+                  <TableCell>{totalValue.toFixed(2)}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleDetailsClick(product)}>
                       <InfoIcon />

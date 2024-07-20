@@ -3,6 +3,7 @@ export interface Stock {
   productId: number;
   locationId: number;
   amount: number;
+  unitPrice: number;
   purchaseDate: string | null;
   dueDate: string | null;
 }

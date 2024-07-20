@@ -68,6 +68,15 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
               </TableCell>
               <TableCell>
                 <TableSortLabel
+                  active={orderBy === "unitPrice"}
+                  direction={orderBy === "unitPrice" ? order : "asc"}
+                  onClick={() => handleRequestSort("unitPrice")}
+                >
+                  Unit Price
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
                   active={orderBy === "dueDate"}
                   direction={orderBy === "dueDate" ? order : "asc"}
                   onClick={() => handleRequestSort("dueDate")}
@@ -99,6 +108,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
             {sortedStocks.map((stock) => (
               <TableRow key={stock.id}>
                 <TableCell>{stock.amount}</TableCell>
+                <TableCell>{stock.unitPrice}</TableCell>
                 <TableCell>{stock.dueDate?.substring(0, 10)}</TableCell>
                 <TableCell>
                   {locations.find((loc) => loc.id === stock.locationId)?.name ||

@@ -29,18 +29,21 @@ import { Product } from "../Models/Product";
 import { Location } from "../Models/Location";
 
 interface HeadCell {
-  id: keyof Stock;
+  id: keyof Stock | "productName" | "locationName";
   label: string;
   numeric: boolean;
 }
 
 const headCells: HeadCell[] = [
-  { id: "productId", numeric: false, label: "Product" },
-  { id: "locationId", numeric: false, label: "Location" },
+  { id: "productName", numeric: false, label: "Product" },
+  { id: "locationName", numeric: false, label: "Location" },
   { id: "amount", numeric: true, label: "Amount" },
+  { id: "unitPrice", numeric: true, label: "Unit Price" },
   { id: "purchaseDate", numeric: false, label: "Purchase Date" },
   { id: "dueDate", numeric: false, label: "Due Date" },
 ];
+
+type Order = "asc" | "desc";
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if ((b[orderBy] ?? "") < (a[orderBy] ?? "")) {
@@ -52,23 +55,14 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   return 0;
 }
 
-type Order = "asc" | "desc";
-
-function getComparator<Key extends keyof Stock>(
-  order: Order,
-  orderBy: Key
-): (a: Stock, b: Stock) => number {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
 const StockList: React.FC = () => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [order, setOrder] = useState<Order>("asc");
-  const [orderBy, setOrderBy] = useState<keyof Stock>("productId");
+  const [orderBy, setOrderBy] = useState<
+    keyof Stock | "productName" | "locationName"
+  >("productName");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [deleteStockId, setDeleteStockId] = useState<number | null>(null);
@@ -104,7 +98,7 @@ const StockList: React.FC = () => {
 
   const handleRequestSort = (
     _event: React.MouseEvent<unknown>,
-    property: keyof Stock
+    property: keyof Stock | "productName" | "locationName"
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -185,6 +179,27 @@ const StockList: React.FC = () => {
     }
   };
 
+  const sortedStocks = stocks.slice().sort((a, b) => {
+    if (orderBy === "productName") {
+      const productA =
+        products.find((product) => product.id === a.productId)?.name || "";
+      const productB =
+        products.find((product) => product.id === b.productId)?.name || "";
+      return productA.localeCompare(productB) * (order === "asc" ? 1 : -1);
+    } else if (orderBy === "locationName") {
+      const locationA =
+        locations.find((location) => location.id === a.locationId)?.name || "";
+      const locationB =
+        locations.find((location) => location.id === b.locationId)?.name || "";
+      return locationA.localeCompare(locationB) * (order === "asc" ? 1 : -1);
+    } else {
+      return (
+        descendingComparator(a, b, orderBy as keyof Stock) *
+        (order === "asc" ? 1 : -1)
+      );
+    }
+  });
+
   return (
     <Container>
       <Typography variant="h6" gutterBottom>
@@ -223,8 +238,7 @@ const StockList: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {stocks
-                .sort(getComparator(order, orderBy))
+              {sortedStocks
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((stock) => (
                   <TableRow key={stock.id}>
@@ -243,6 +257,7 @@ const StockList: React.FC = () => {
                       }
                     </TableCell>
                     <TableCell>{stock.amount}</TableCell>
+                    <TableCell>{stock.unitPrice}</TableCell>
                     <TableCell>
                       {stock.purchaseDate
                         ? new Date(stock.purchaseDate).toLocaleDateString()
