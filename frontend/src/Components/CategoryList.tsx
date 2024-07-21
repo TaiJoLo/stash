@@ -67,17 +67,20 @@ const CategoryList: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("http://localhost:5248/api/categories");
-        const data = await response.json();
-        setCategories(data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("http://localhost:5248/api/categories");
+      const data = await response.json();
+      const categories = data.$values || data || [];
+      console.log("Fetched categories:", categories); // Debug log
+      setCategories(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
+  useEffect(() => {
+    console.log("useEffect triggered");
     fetchCategories();
   }, []);
 
@@ -102,7 +105,7 @@ const CategoryList: React.FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (deleteCategoryId) {
+    if (deleteCategoryId !== null) {
       try {
         await fetch(
           `http://localhost:5248/api/categories/${deleteCategoryId}`,
@@ -111,10 +114,10 @@ const CategoryList: React.FC = () => {
           }
         );
 
-        const response = await fetch("http://localhost:5248/api/categories");
-        const updatedCategories = await response.json();
-        setCategories(updatedCategories);
-
+        setCategories((prevCategories) =>
+          prevCategories.filter((category) => category.id !== deleteCategoryId)
+        );
+        console.log("Category deleted:", deleteCategoryId); // Debug log
         setDeleteCategoryId(null);
       } catch (error) {
         console.error("Error deleting category:", error);
@@ -147,14 +150,34 @@ const CategoryList: React.FC = () => {
         body: JSON.stringify(category),
       });
 
+      const responseText = await response.text();
+      console.log("Response Text:", responseText); // Debug log
+
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        console.error("Error response text:", responseText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const updatedCategories = await fetch(
-        "http://localhost:5248/api/categories"
-      ).then((res) => res.json());
-      setCategories(updatedCategories);
+      if (!responseText) {
+        console.error("Empty response text");
+        throw new Error("Received empty response from the server");
+      }
+
+      const savedCategory = JSON.parse(responseText);
+      console.log("Saved category:", savedCategory); // Debug log
+
+      setCategories((prevCategories) => {
+        if (method === "POST") {
+          console.log("Adding new category to state:", savedCategory); // Debug log
+          return [...prevCategories, savedCategory];
+        } else {
+          console.log("Updating existing category in state:", savedCategory); // Debug log
+          return prevCategories.map((cat) =>
+            cat.id === savedCategory.id ? savedCategory : cat
+          );
+        }
+      });
+
       handleEditClose();
     } catch (error) {
       console.error("Error saving category:", error);
@@ -170,7 +193,10 @@ const CategoryList: React.FC = () => {
         variant="contained"
         color="primary"
         startIcon={<AddIcon />}
-        onClick={() => setEditDialogOpen(true)}
+        onClick={() => {
+          setEditCategory(null);
+          setEditDialogOpen(true);
+        }}
         style={{ marginBottom: "16px" }}
       >
         Add Category
@@ -199,28 +225,36 @@ const CategoryList: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {categories
-                .sort(getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        aria-label="edit"
-                        onClick={() => handleEditClick(category)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label="delete"
-                        onClick={() => setDeleteCategoryId(category.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {categories.length > 0 ? (
+                categories
+                  .sort(getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          aria-label="edit"
+                          onClick={() => handleEditClick(category)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete"
+                          onClick={() => setDeleteCategoryId(category.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={2} align="center">
+                    No categories available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>

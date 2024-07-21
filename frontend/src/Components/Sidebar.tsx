@@ -14,6 +14,7 @@ import {
   Storage,
   LocationOn,
   Assessment,
+  Assignment,
 } from "@mui/icons-material";
 import { NavLink } from "react-router-dom";
 
@@ -104,6 +105,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
             <Assessment />
           </ListItemIcon>
           <ListItemText primary="Stock Overview" />
+        </ListItem>
+        <ListItem
+          button
+          component={NavLink}
+          to="/stock-journal"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <Assignment />
+          </ListItemIcon>
+          <ListItemText primary="Stock Journal" />
         </ListItem>
       </List>
     </div>

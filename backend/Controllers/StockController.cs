@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Stash.Models;
 using Stash.Repositories;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Stash.Controllers
 {
@@ -13,11 +13,13 @@ namespace Stash.Controllers
     {
         private readonly IStockRepository _stockRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IStockTransactionRepository _stockTransactionRepository;
 
-        public StockController(IStockRepository stockRepository, IProductRepository productRepository)
+        public StockController(IStockRepository stockRepository, IProductRepository productRepository, IStockTransactionRepository stockTransactionRepository)
         {
             _stockRepository = stockRepository;
             _productRepository = productRepository;
+            _stockTransactionRepository = stockTransactionRepository;
         }
 
         // GET: api/stocks
@@ -60,6 +62,18 @@ namespace Stash.Controllers
             stock.Location = location;
 
             await _stockRepository.AddStockAsync(stock);
+
+            // Log transaction
+            var transaction = new StockTransaction
+            {
+                StockId = stock.Id,
+                ProductName = product.Name,
+                Amount = stock.Amount,
+                TransactionTime = DateTime.UtcNow,
+                TransactionType = "Add"
+            };
+            await _stockTransactionRepository.AddTransactionAsync(transaction);
+
             return CreatedAtAction(nameof(GetStock), new { id = stock.Id }, stock);
         }
 
@@ -100,6 +114,18 @@ namespace Stash.Controllers
             existingStock.Location = location;
 
             await _stockRepository.UpdateStockAsync(existingStock);
+
+            // Log transaction
+            var transaction = new StockTransaction
+            {
+                StockId = existingStock.Id,
+                ProductName = product.Name,
+                Amount = stock.Amount,
+                TransactionTime = DateTime.UtcNow,
+                TransactionType = "Edit"
+            };
+            await _stockTransactionRepository.AddTransactionAsync(transaction);
+
             return NoContent();
         }
 
@@ -114,6 +140,18 @@ namespace Stash.Controllers
             }
 
             await _stockRepository.DeleteStockAsync(id);
+
+            // Log transaction
+            var transaction = new StockTransaction
+            {
+                StockId = stock.Id,
+                ProductName = stock.Product?.Name ?? "Unknown",
+                Amount = -stock.Amount, // Assuming amount is positive, -amount signifies deletion
+                TransactionTime = DateTime.UtcNow,
+                TransactionType = "Delete"
+            };
+            await _stockTransactionRepository.AddTransactionAsync(transaction);
+
             return NoContent();
         }
 
@@ -124,7 +162,7 @@ namespace Stash.Controllers
             var stocks = await _stockRepository.GetAllStocksAsync();
             var productStocks = stocks
                 .Where(s => s.ProductId == productId && s.Amount > 0)
-                .OrderBy(s => s.DueDate ?? System.DateTime.MaxValue)
+                .OrderBy(s => s.DueDate ?? DateTime.MaxValue)
                 .ThenBy(s => s.PurchaseDate)
                 .ToList();
 
@@ -134,6 +172,7 @@ namespace Stash.Controllers
                 if (remainingAmount <= 0)
                     break;
 
+                int originalAmount = stock.Amount;
                 if (stock.Amount > remainingAmount)
                 {
                     stock.Amount -= remainingAmount;
@@ -146,6 +185,17 @@ namespace Stash.Controllers
                 }
 
                 await _stockRepository.UpdateStockAsync(stock);
+
+                // Log transaction
+                var transaction = new StockTransaction
+                {
+                    StockId = stock.Id,
+                    ProductName = stock.Product?.Name ?? "Unknown",
+                    Amount = originalAmount - stock.Amount,
+                    TransactionTime = DateTime.UtcNow,
+                    TransactionType = "Consume"
+                };
+                await _stockTransactionRepository.AddTransactionAsync(transaction);
             }
 
             if (remainingAmount > 0)
@@ -154,6 +204,27 @@ namespace Stash.Controllers
             }
 
             return Ok();
+        }
+
+        // GET: api/stocks/transactions
+        [HttpGet("transactions")]
+        public async Task<ActionResult<IEnumerable<StockTransaction>>> GetStockTransactions()
+        {
+            var transactions = await _stockTransactionRepository.GetAllTransactionsAsync();
+            return Ok(transactions);
+        }
+
+        // GET: api/stocks/transactions/{productId}
+        [HttpGet("transactions/{productId}")]
+        public async Task<ActionResult<IEnumerable<StockTransaction>>> GetTransactionsByProductId(int productId)
+        {
+            var transactions = await _stockTransactionRepository.GetTransactionsByProductIdAsync(productId);
+            if (transactions == null || !transactions.Any())
+            {
+                return NotFound();
+            }
+            Console.WriteLine($"Transactions for Product ID {productId}: {JsonSerializer.Serialize(transactions)}"); // Debug log
+            return Ok(transactions);
         }
     }
 }

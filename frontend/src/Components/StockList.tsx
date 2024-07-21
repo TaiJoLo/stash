@@ -75,19 +75,32 @@ const StockList: React.FC = () => {
       try {
         const stocksResponse = await fetch("http://localhost:5248/api/stocks");
         const stocksData = await stocksResponse.json();
-        setStocks(stocksData);
+        console.log("Fetched Stocks:", stocksData); // Debug log
+        setStocks(
+          Array.isArray(stocksData) ? stocksData : stocksData.$values || []
+        );
 
         const productsResponse = await fetch(
           "http://localhost:5248/api/products"
         );
         const productsData = await productsResponse.json();
-        setProducts(productsData);
+        console.log("Fetched Products:", productsData); // Debug log
+        setProducts(
+          Array.isArray(productsData)
+            ? productsData
+            : productsData.$values || []
+        );
 
         const locationsResponse = await fetch(
           "http://localhost:5248/api/locations"
         );
         const locationsData = await locationsResponse.json();
-        setLocations(locationsData);
+        console.log("Fetched Locations:", locationsData); // Debug log
+        setLocations(
+          Array.isArray(locationsData)
+            ? locationsData
+            : locationsData.$values || []
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -172,7 +185,11 @@ const StockList: React.FC = () => {
       const updatedStocks = await fetch(
         "http://localhost:5248/api/stocks"
       ).then((res) => res.json());
-      setStocks(updatedStocks);
+      setStocks(
+        Array.isArray(updatedStocks)
+          ? updatedStocks
+          : updatedStocks.$values || []
+      );
       handleFormClose();
     } catch (error) {
       console.error("Error saving stock:", error);
@@ -238,59 +255,67 @@ const StockList: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedStocks
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((stock) => (
-                  <TableRow key={stock.id}>
-                    <TableCell>
-                      {
-                        products.find(
-                          (product) => product.id === stock.productId
-                        )?.name
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {
-                        locations.find(
-                          (location) => location.id === stock.locationId
-                        )?.name
-                      }
-                    </TableCell>
-                    <TableCell>{stock.amount}</TableCell>
-                    <TableCell>{stock.unitPrice}</TableCell>
-                    <TableCell>
-                      {stock.purchaseDate
-                        ? new Date(stock.purchaseDate).toLocaleDateString()
-                        : ""}
-                    </TableCell>
-                    <TableCell>
-                      {stock.dueDate
-                        ? new Date(stock.dueDate).toLocaleDateString()
-                        : ""}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        aria-label="edit"
-                        onClick={() => handleEditClick(stock)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label="delete"
-                        onClick={() => setDeleteStockId(stock.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {Array.isArray(sortedStocks) && sortedStocks.length > 0 ? (
+                sortedStocks
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((stock) => (
+                    <TableRow key={stock.id}>
+                      <TableCell>
+                        {
+                          products.find(
+                            (product) => product.id === stock.productId
+                          )?.name
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {
+                          locations.find(
+                            (location) => location.id === stock.locationId
+                          )?.name
+                        }
+                      </TableCell>
+                      <TableCell>{stock.amount}</TableCell>
+                      <TableCell>{stock.unitPrice}</TableCell>
+                      <TableCell>
+                        {stock.purchaseDate
+                          ? new Date(stock.purchaseDate).toLocaleDateString()
+                          : ""}
+                      </TableCell>
+                      <TableCell>
+                        {stock.dueDate
+                          ? new Date(stock.dueDate).toLocaleDateString()
+                          : ""}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          aria-label="edit"
+                          onClick={() => handleEditClick(stock)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete"
+                          onClick={() => setDeleteStockId(stock.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No stocks available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={stocks.length}
+          count={Array.isArray(stocks) ? stocks.length : 0}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

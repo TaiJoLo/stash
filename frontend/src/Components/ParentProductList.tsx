@@ -70,19 +70,21 @@ const ParentProductList: React.FC = () => {
   const [editParentProduct, setEditParentProduct] =
     useState<ParentProduct | null>(null);
 
-  useEffect(() => {
-    const fetchParentProducts = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5248/api/parentproducts"
-        );
-        const data = await response.json();
-        setParentProducts(data);
-      } catch (error) {
-        console.error("Error fetching parent products:", error);
-      }
-    };
+  const fetchParentProducts = async () => {
+    try {
+      const response = await fetch("http://localhost:5248/api/parentproducts");
+      const data = await response.json();
+      const parentProductsArray = Array.isArray(data)
+        ? data
+        : data.$values || [];
+      console.log("Fetched parent products:", parentProductsArray); // Debug log
+      setParentProducts(parentProductsArray);
+    } catch (error) {
+      console.error("Error fetching parent products:", error);
+    }
+  };
 
+  useEffect(() => {
     fetchParentProducts();
   }, []);
 
@@ -120,7 +122,14 @@ const ParentProductList: React.FC = () => {
           "http://localhost:5248/api/parentproducts"
         );
         const updatedParentProducts = await response.json();
-        setParentProducts(updatedParentProducts);
+        const parentProductsArray = Array.isArray(updatedParentProducts)
+          ? updatedParentProducts
+          : updatedParentProducts.$values || [];
+        console.log(
+          "Updated parent products after delete:",
+          parentProductsArray
+        ); // Debug log
+        setParentProducts(parentProductsArray);
 
         setDeleteParentProductId(null);
       } catch (error) {
@@ -161,7 +170,11 @@ const ParentProductList: React.FC = () => {
       const updatedParentProducts = await fetch(
         "http://localhost:5248/api/parentproducts"
       ).then((res) => res.json());
-      setParentProducts(updatedParentProducts);
+      const parentProductsArray = Array.isArray(updatedParentProducts)
+        ? updatedParentProducts
+        : updatedParentProducts.$values || [];
+      console.log("Updated parent products:", parentProductsArray); // Debug log
+      setParentProducts(parentProductsArray);
       handleEditClose();
     } catch (error) {
       console.error("Error saving parent product:", error);
@@ -206,37 +219,45 @@ const ParentProductList: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {parentProducts
-                .sort(getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((parentProduct) => (
-                  <TableRow key={parentProduct.id}>
-                    <TableCell>{parentProduct.name}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        aria-label="edit"
-                        onClick={() => handleEditClick(parentProduct)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label="delete"
-                        onClick={() =>
-                          setDeleteParentProductId(parentProduct.id)
-                        }
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {Array.isArray(parentProducts) && parentProducts.length > 0 ? (
+                parentProducts
+                  .sort(getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((parentProduct) => (
+                    <TableRow key={parentProduct.id}>
+                      <TableCell>{parentProduct.name}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          aria-label="edit"
+                          onClick={() => handleEditClick(parentProduct)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete"
+                          onClick={() =>
+                            setDeleteParentProductId(parentProduct.id)
+                          }
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={2} align="center">
+                    No parent products available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={parentProducts.length}
+          count={Array.isArray(parentProducts) ? parentProducts.length : 0}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -246,7 +267,7 @@ const ParentProductList: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog
-        open={!!deleteParentProductId}
+        open={deleteParentProductId !== null}
         onClose={() => setDeleteParentProductId(null)}
       >
         <DialogTitle>Delete Parent Product?</DialogTitle>

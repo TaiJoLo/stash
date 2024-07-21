@@ -1,22 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using Stash.Models;
 using Stash.Repositories;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Stash.Controllers
 {
-
     [ApiController]
     [Route("api/categories")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ILogger<CategoryController> _logger;
 
-        public CategoryController(ICategoryRepository categoryRepository)
+        public CategoryController(ICategoryRepository categoryRepository, ILogger<CategoryController> logger)
         {
             _categoryRepository = categoryRepository;
+            _logger = logger;
         }
+
         // GET: api/categories
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
@@ -41,7 +44,9 @@ namespace Stash.Controllers
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
+            _logger.LogInformation("Received POST request with category: {Category}", category);
             var createdCategory = await _categoryRepository.AddCategoryAsync(category);
+            _logger.LogInformation("Category added: {Category}", createdCategory);
             return CreatedAtAction(nameof(GetCategory), new { id = createdCategory.Id }, createdCategory);
         }
 
@@ -54,8 +59,11 @@ namespace Stash.Controllers
                 return BadRequest();
             }
 
+            _logger.LogInformation("Received PUT request with category: {Category}", category);
             await _categoryRepository.UpdateCategoryAsync(category);
-            return NoContent();
+            var updatedCategory = await _categoryRepository.GetCategoryByIdAsync(id); // Fetch updated category
+            _logger.LogInformation("Category updated: {Category}", updatedCategory);
+            return Ok(updatedCategory); // Return updated category
         }
 
         // DELETE: api/categories/5

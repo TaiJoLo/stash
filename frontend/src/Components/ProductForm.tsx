@@ -103,11 +103,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
             value={categoryId}
             onChange={(e) => setCategoryId(Number(e.target.value))}
           >
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(categories) && categories.length > 0 ? (
+              categories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>No categories available</MenuItem>
+            )}
           </Select>
         </FormControl>
         <FormControl fullWidth margin="dense">
@@ -116,11 +120,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
             value={parentProductId}
             onChange={(e) => setParentProductId(Number(e.target.value))}
           >
-            {parentProducts.map((parentProduct) => (
-              <MenuItem key={parentProduct.id} value={parentProduct.id}>
-                {parentProduct.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(parentProducts) && parentProducts.length > 0 ? (
+              parentProducts.map((parentProduct) => (
+                <MenuItem key={parentProduct.id} value={parentProduct.id}>
+                  {parentProduct.name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>No parent products available</MenuItem>
+            )}
           </Select>
         </FormControl>
       </DialogContent>

@@ -1,13 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using Stash.Models;
 using Stash.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    });
 
-// Register DbContext
+// Register DbContext with in-memory database
 builder.Services.AddDbContext<StashContext>(opt =>
     opt.UseInMemoryDatabase("StashDatabase"));
 
@@ -17,6 +22,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
 builder.Services.AddScoped<IParentProductRepository, ParentProductRepository>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+builder.Services.AddScoped<IStockTransactionRepository, StockTransactionRepository>();
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
@@ -30,7 +36,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowAnyOrigin(); // For localhost only. Allow all
+            .AllowAnyOrigin(); // For localhost only. Adjust as needed for production
     });
 });
 

@@ -88,22 +88,25 @@ const ProductList: React.FC = () => {
           "http://localhost:5248/api/products"
         );
         const productsData = await productsResponse.json();
-        console.log("Fetched Products: ", productsData);
-        setProducts(productsData);
+        const products = productsData.$values || [];
+        console.log("Fetched Products: ", products);
+        setProducts(products);
 
         const categoriesResponse = await fetch(
           "http://localhost:5248/api/categories"
         );
         const categoriesData = await categoriesResponse.json();
-        console.log("Fetched Categories: ", categoriesData);
-        setCategories(categoriesData);
+        const categories = categoriesData.$values || [];
+        console.log("Fetched Categories: ", categories);
+        setCategories(categories);
 
         const parentProductsResponse = await fetch(
           "http://localhost:5248/api/parentproducts"
         );
         const parentProductsData = await parentProductsResponse.json();
-        console.log("Fetched Parent Products: ", parentProductsData);
-        setParentProducts(parentProductsData);
+        const parentProducts = parentProductsData.$values || [];
+        console.log("Fetched Parent Products: ", parentProducts);
+        setParentProducts(parentProducts);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -143,7 +146,9 @@ const ProductList: React.FC = () => {
           "http://localhost:5248/api/products"
         );
         const updatedProductsData = await productsResponse.json();
-        setProducts(updatedProductsData);
+        const products = updatedProductsData.$values || [];
+        console.log("Updated Products after deletion: ", products);
+        setProducts(products);
 
         setDeleteProductId(null);
       } catch (error) {
@@ -185,7 +190,9 @@ const ProductList: React.FC = () => {
         "http://localhost:5248/api/products"
       );
       const updatedProductsData = await productsResponse.json();
-      setProducts(updatedProductsData);
+      const products = updatedProductsData.$values || [];
+      console.log("Updated Products after edit: ", products);
+      setProducts(products);
 
       setEditDialogOpen(false);
       setEditProduct(null);
@@ -225,7 +232,9 @@ const ProductList: React.FC = () => {
       const updatedProducts = await fetch(
         "http://localhost:5248/api/products"
       ).then((res) => res.json());
-      setProducts(updatedProducts);
+      const products = updatedProducts.$values || [];
+      console.log("Updated Products after save: ", products);
+      setProducts(products);
       handleFormClose();
     } catch (error) {
       console.error("Error saving product:", error);
@@ -270,44 +279,57 @@ const ProductList: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {products
-                .sort(getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>
-                      {categories.find((cat) => cat.id === product.categoryId)
-                        ?.name || ""}
-                    </TableCell>
-                    <TableCell>
-                      {parentProducts.find(
-                        (p) => p.id === product.parentProductId
-                      )?.name || ""}
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        aria-label="edit"
-                        onClick={() => handleEditClick(product)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label="delete"
-                        onClick={() => setDeleteProductId(product.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {Array.isArray(products) && products.length > 0 ? (
+                products
+                  .sort(getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>
+                        {(Array.isArray(categories) &&
+                          categories.find(
+                            (cat) => cat.id === product.categoryId
+                          )?.name) ||
+                          ""}
+                      </TableCell>
+                      <TableCell>
+                        {(Array.isArray(parentProducts) &&
+                          parentProducts.find(
+                            (p) => p.id === product.parentProductId
+                          )?.name) ||
+                          ""}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          aria-label="edit"
+                          onClick={() => handleEditClick(product)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="delete"
+                          onClick={() => setDeleteProductId(product.id)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">
+                    No products available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={products.length}
+          count={products.length ?? 0} // Ensure count is always a number
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -372,11 +394,12 @@ const ProductList: React.FC = () => {
                     })
                   }
                 >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
+                  {Array.isArray(categories) &&
+                    categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth margin="dense">
@@ -391,11 +414,12 @@ const ProductList: React.FC = () => {
                     });
                   }}
                 >
-                  {parentProducts.map((parentProduct) => (
-                    <MenuItem key={parentProduct.id} value={parentProduct.id}>
-                      {parentProduct.name}
-                    </MenuItem>
-                  ))}
+                  {Array.isArray(parentProducts) &&
+                    parentProducts.map((parentProduct) => (
+                      <MenuItem key={parentProduct.id} value={parentProduct.id}>
+                        {parentProduct.name}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
             </div>

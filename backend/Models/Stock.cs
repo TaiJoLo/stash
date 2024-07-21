@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Stash.Models
@@ -17,5 +18,9 @@ namespace Stash.Models
         [JsonIgnore]
         public virtual Product? Product { get; set; }
         public virtual Location? Location { get; set; }
+
+        // Transactions navigation property
+        [JsonIgnore]
+        public virtual ICollection<StockTransaction> Transactions { get; set; } = new List<StockTransaction>();
     }
 }

@@ -26,7 +26,9 @@ import { Location } from "../Models/Location";
 import {
   Info as InfoIcon,
   LocalGroceryStore as ConsumeIcon,
+  History as JournalIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import StockDetails from "./StockDetails";
 
 type Order = "asc" | "desc";
@@ -49,32 +51,50 @@ const StockOverview: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const productsResponse = await fetch(
-        "http://localhost:5248/api/products"
-      );
-      const productsData = await productsResponse.json();
-      setProducts(productsData);
+      try {
+        const productsResponse = await fetch(
+          "http://localhost:5248/api/products"
+        );
+        const productsData = await productsResponse.json();
+        console.log("Fetched products:", productsData); // Log fetched products
+        const productsArray = productsData.$values || productsData;
+        if (!Array.isArray(productsArray)) {
+          console.error("Products data is not an array:", productsArray);
+          throw new Error("Invalid response format for products data");
+        }
+        setProducts(productsArray);
 
-      const stocksResponse = await fetch("http://localhost:5248/api/stocks");
-      const stocksData = await stocksResponse.json();
+        const stocksResponse = await fetch("http://localhost:5248/api/stocks");
+        const stocksData = await stocksResponse.json();
+        console.log("Fetched stocks:", stocksData); // Log fetched stocks
+        const stocksArray = stocksData.$values || stocksData;
+        if (!Array.isArray(stocksArray)) {
+          console.error("Stocks data is not an array:", stocksArray);
+          throw new Error("Invalid response format for stocks data");
+        }
 
-      const locationsResponse = await fetch(
-        "http://localhost:5248/api/locations"
-      );
-      const locationsData = await locationsResponse.json();
-      setLocations(locationsData);
+        const locationsResponse = await fetch(
+          "http://localhost:5248/api/locations"
+        );
+        const locationsData = await locationsResponse.json();
+        console.log("Fetched locations:", locationsData); // Log fetched locations
+        const locationsArray = locationsData.$values || locationsData;
+        setLocations(locationsArray);
 
-      const grouped = stocksData.reduce(
-        (acc: Record<number, Stock[]>, stock: Stock) => {
-          if (!acc[stock.productId]) {
-            acc[stock.productId] = [];
-          }
-          acc[stock.productId].push(stock);
-          return acc;
-        },
-        {}
-      );
-      setGroupedStocks(grouped);
+        const grouped = stocksArray.reduce(
+          (acc: Record<number, Stock[]>, stock: Stock) => {
+            if (!acc[stock.productId]) {
+              acc[stock.productId] = [];
+            }
+            acc[stock.productId].push(stock);
+            return acc;
+          },
+          {}
+        );
+        setGroupedStocks(grouped);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
 
     fetchData();
@@ -132,7 +152,17 @@ const StockOverview: React.FC = () => {
             "http://localhost:5248/api/stocks"
           );
           const stocksData = await stocksResponse.json();
-          const grouped = stocksData.reduce(
+          console.log("Fetched stocks after consuming:", stocksData); // Log fetched stocks after consuming
+          const stocksArray = stocksData.$values || stocksData;
+          if (!Array.isArray(stocksArray)) {
+            console.error(
+              "Stocks data is not an array after consuming:",
+              stocksArray
+            );
+            throw new Error("Invalid response format for stocks data");
+          }
+
+          const grouped = stocksArray.reduce(
             (acc: Record<number, Stock[]>, stock: Stock) => {
               if (!acc[stock.productId]) {
                 acc[stock.productId] = [];
@@ -159,32 +189,42 @@ const StockOverview: React.FC = () => {
     setOrderBy(property);
   };
 
-  const sortedProducts = products.slice().sort((a, b) => {
-    if (orderBy === "name") {
-      return (
-        (a[orderBy] as string).localeCompare(b[orderBy] as string) *
-        (order === "asc" ? 1 : -1)
-      );
-    } else if (orderBy === "amount") {
-      const aAmount =
-        groupedStocks[a.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
-      const bAmount =
-        groupedStocks[b.id]?.reduce((sum, stock) => sum + stock.amount, 0) || 0;
-      return (aAmount - bAmount) * (order === "asc" ? 1 : -1);
-    } else {
-      const aValue =
-        groupedStocks[a.id]?.reduce(
-          (sum, stock) => sum + stock.amount * stock.unitPrice,
-          0
-        ) || 0;
-      const bValue =
-        groupedStocks[b.id]?.reduce(
-          (sum, stock) => sum + stock.amount * stock.unitPrice,
-          0
-        ) || 0;
-      return (aValue - bValue) * (order === "asc" ? 1 : -1);
-    }
-  });
+  const sortedProducts = Array.isArray(products)
+    ? products.slice().sort((a, b) => {
+        if (orderBy === "name") {
+          return (
+            (a[orderBy] as string).localeCompare(b[orderBy] as string) *
+            (order === "asc" ? 1 : -1)
+          );
+        } else if (orderBy === "amount") {
+          const aAmount =
+            groupedStocks[a.id]?.reduce(
+              (sum, stock) => sum + stock.amount,
+              0
+            ) || 0;
+          const bAmount =
+            groupedStocks[b.id]?.reduce(
+              (sum, stock) => sum + stock.amount,
+              0
+            ) || 0;
+          return (aAmount - bAmount) * (order === "asc" ? 1 : -1);
+        } else {
+          const aValue =
+            groupedStocks[a.id]?.reduce(
+              (sum, stock) => sum + stock.amount * stock.unitPrice,
+              0
+            ) || 0;
+          const bValue =
+            groupedStocks[b.id]?.reduce(
+              (sum, stock) => sum + stock.amount * stock.unitPrice,
+              0
+            ) || 0;
+          return (aValue - bValue) * (order === "asc" ? 1 : -1);
+        }
+      })
+    : [];
+
+  const navigate = useNavigate();
 
   return (
     <Container>
@@ -248,6 +288,11 @@ const StockOverview: React.FC = () => {
                     <IconButton onClick={() => handleConsumeClick(product)}>
                       <ConsumeIcon />
                     </IconButton>
+                    <IconButton
+                      onClick={() => navigate(`/stock-journal/${product.id}`)}
+                    >
+                      <JournalIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               );
@@ -258,7 +303,7 @@ const StockOverview: React.FC = () => {
       {selectedProduct && (
         <>
           <Dialog open={detailsDialogOpen} onClose={handleDetailsClose}>
-            <DialogTitle>{selectedProduct.name} </DialogTitle>
+            <DialogTitle>{selectedProduct.name}</DialogTitle>
             <DialogContent>
               <StockDetails
                 stocks={groupedStocks[selectedProduct.id]}
