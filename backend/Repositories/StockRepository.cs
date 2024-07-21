@@ -16,12 +16,12 @@ namespace Stash.Repositories
 
         public async Task<IEnumerable<Stock>> GetAllStocksAsync()
         {
-            return await _context.Stocks.Include(s => s.Product).ToListAsync();
+            return await _context.Stocks.Include(s => s.Product).Include(s => s.Location).ToListAsync();
         }
 
         public async Task<Stock?> GetStockByIdAsync(int id)
         {
-            return await _context.Stocks.Include(s => s.Product).FirstOrDefaultAsync(s => s.Id == id);
+            return await _context.Stocks.Include(s => s.Product).Include(s => s.Location).FirstOrDefaultAsync(s => s.Id == id);
         }
 
         public async Task<Stock> AddStockAsync(Stock stock)
@@ -45,6 +45,11 @@ namespace Stash.Repositories
                 _context.Stocks.Remove(stock);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<Location?> GetLocationByIdAsync(int id)
+        {
+            return await _context.Locations.FindAsync(id);
         }
     }
 }

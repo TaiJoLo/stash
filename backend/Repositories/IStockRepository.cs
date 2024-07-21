@@ -11,5 +11,6 @@ namespace Stash.Repositories
         Task<Stock> AddStockAsync(Stock stock);
         Task UpdateStockAsync(Stock stock);
         Task DeleteStockAsync(int id);
+        Task<Location?> GetLocationByIdAsync(int id); 
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Stash.Models;
 using Stash.Repositories;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Stash.Controllers
@@ -49,7 +50,15 @@ namespace Stash.Controllers
                 return BadRequest("Invalid ProductId");
             }
 
+            var location = await _stockRepository.GetLocationByIdAsync(stock.LocationId);
+            if (location == null)
+            {
+                return BadRequest("Invalid LocationId");
+            }
+
             stock.Product = product;
+            stock.Location = location;
+
             await _stockRepository.AddStockAsync(stock);
             return CreatedAtAction(nameof(GetStock), new { id = stock.Id }, stock);
         }
@@ -75,12 +84,20 @@ namespace Stash.Controllers
                 return BadRequest("Invalid ProductId");
             }
 
+            var location = await _stockRepository.GetLocationByIdAsync(stock.LocationId);
+            if (location == null)
+            {
+                return BadRequest("Invalid LocationId");
+            }
+
             existingStock.ProductId = stock.ProductId;
             existingStock.LocationId = stock.LocationId;
             existingStock.Amount = stock.Amount;
             existingStock.PurchaseDate = stock.PurchaseDate;
             existingStock.DueDate = stock.DueDate;
+            existingStock.UnitPrice = stock.UnitPrice;
             existingStock.Product = product;
+            existingStock.Location = location;
 
             await _stockRepository.UpdateStockAsync(existingStock);
             return NoContent();
@@ -98,6 +115,45 @@ namespace Stash.Controllers
 
             await _stockRepository.DeleteStockAsync(id);
             return NoContent();
+        }
+
+        // POST: api/stocks/consume-stock/{productId}
+        [HttpPost("consume-stock/{productId}")]
+        public async Task<IActionResult> ConsumeStock(int productId, [FromBody] int amount)
+        {
+            var stocks = await _stockRepository.GetAllStocksAsync();
+            var productStocks = stocks
+                .Where(s => s.ProductId == productId && s.Amount > 0)
+                .OrderBy(s => s.DueDate ?? System.DateTime.MaxValue)
+                .ThenBy(s => s.PurchaseDate)
+                .ToList();
+
+            int remainingAmount = amount;
+            foreach (var stock in productStocks)
+            {
+                if (remainingAmount <= 0)
+                    break;
+
+                if (stock.Amount > remainingAmount)
+                {
+                    stock.Amount -= remainingAmount;
+                    remainingAmount = 0;
+                }
+                else
+                {
+                    remainingAmount -= stock.Amount;
+                    stock.Amount = 0;
+                }
+
+                await _stockRepository.UpdateStockAsync(stock);
+            }
+
+            if (remainingAmount > 0)
+            {
+                return BadRequest("Not enough stock to consume the requested amount.");
+            }
+
+            return Ok();
         }
     }
 }
