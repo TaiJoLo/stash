@@ -6,23 +6,57 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Typography,
   TableSortLabel,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
+import {
+  Edit as EditIcon,
+  LocalGroceryStore as ConsumeIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import StockForm from "./StockForm";
 import { Stock } from "../Models/Stock";
 import { Location } from "../Models/Location";
+import { Product } from "../Models/Product";
 
 interface StockDetailsProps {
   stocks: Stock[];
   locations: Location[];
+  products: Product[];
+  onEdit: (stock: Stock) => void;
+  onConsume: (stock: Stock, amount: number, consumeAll: boolean) => void;
+  onDelete: (stockId: number) => void;
 }
 
 type Order = "asc" | "desc";
 
-const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
+const StockDetails: React.FC<StockDetailsProps> = ({
+  stocks,
+  locations,
+  products,
+  onEdit,
+  onConsume,
+  onDelete,
+}) => {
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Stock>("amount");
+  const [editStock, setEditStock] = useState<Stock | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [consumeDialogOpen, setConsumeDialogOpen] = useState(false);
+  const [consumeAmount, setConsumeAmount] = useState<number>(1);
+  const [consumeAll, setConsumeAll] = useState<boolean>(false);
+  const [consumeStock, setConsumeStock] = useState<Stock | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteStockId, setDeleteStockId] = useState<number | null>(null);
 
   const handleRequestSort = (property: keyof Stock) => {
     const isAsc = orderBy === property && order === "asc";
@@ -48,12 +82,66 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
     return (aValue - bValue) * (order === "asc" ? 1 : -1);
   });
 
+  const handleEditClick = (stock: Stock) => {
+    setEditStock(stock);
+    setFormOpen(true);
+  };
+
+  const handleFormClose = () => {
+    setFormOpen(false);
+    setEditStock(null);
+  };
+
+  const handleFormSave = (stock: Stock) => {
+    onEdit(stock);
+    handleFormClose();
+  };
+
+  const handleConsumeClick = (stock: Stock) => {
+    setConsumeStock(stock);
+    setConsumeDialogOpen(true);
+    setConsumeAmount(1); // Default consume amount
+    setConsumeAll(false); // Default to not consuming all
+  };
+
+  const handleConsumeClose = () => {
+    setConsumeDialogOpen(false);
+    setConsumeAmount(1);
+    setConsumeAll(false);
+    setConsumeStock(null);
+  };
+
+  const handleConsumeSubmit = () => {
+    if (consumeStock) {
+      onConsume(consumeStock, consumeAmount, consumeAll);
+      handleConsumeClose();
+    }
+  };
+
+  const handleDeleteClick = (stockId: number) => {
+    setDeleteStockId(stockId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteStockId) {
+      onDelete(deleteStockId);
+      setDeleteDialogOpen(false);
+      setDeleteStockId(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setDeleteStockId(null);
+  };
+
   return (
     <div>
       <Typography variant="h6" gutterBottom>
         Stock Details
       </Typography>
-      <TableContainer component={Paper}>
+      <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -102,6 +190,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
                   Purchase Date
                 </TableSortLabel>
               </TableCell>
+              <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -115,11 +204,91 @@ const StockDetails: React.FC<StockDetailsProps> = ({ stocks, locations }) => {
                     ""}
                 </TableCell>
                 <TableCell>{stock.purchaseDate?.substring(0, 10)}</TableCell>
+                <TableCell>
+                  <IconButton
+                    aria-label="edit"
+                    onClick={() => handleEditClick(stock)}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    aria-label="consume"
+                    onClick={() => handleConsumeClick(stock)}
+                  >
+                    <ConsumeIcon />
+                  </IconButton>
+                  <IconButton
+                    aria-label="delete"
+                    onClick={() => handleDeleteClick(stock.id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Edit Stock Form */}
+      <StockForm
+        open={formOpen}
+        onClose={handleFormClose}
+        onSave={handleFormSave}
+        stock={editStock}
+        products={products}
+        locations={locations}
+      />
+
+      {/* Consume Stock Dialog */}
+      <Dialog open={consumeDialogOpen} onClose={handleConsumeClose}>
+        <DialogTitle>Consume Stock</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Amount to Consume"
+            type="number"
+            fullWidth
+            value={consumeAmount}
+            onChange={(e) => setConsumeAmount(Number(e.target.value))}
+            inputProps={{ min: 1 }}
+            margin="normal"
+            disabled={consumeAll}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={consumeAll}
+                onChange={(e) => setConsumeAll(e.target.checked)}
+              />
+            }
+            label="Consume All"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConsumeClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConsumeSubmit} color="primary">
+            Consume
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Stock?</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this stock?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="primary">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

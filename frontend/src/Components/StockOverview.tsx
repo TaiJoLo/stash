@@ -183,6 +183,73 @@ const StockOverview: React.FC = () => {
     }
   };
 
+  const handleEditStock = async (stock: Stock) => {
+    try {
+      const method = stock.id ? "PUT" : "POST";
+      const url = stock.id
+        ? `http://localhost:5248/api/stocks/${stock.id}`
+        : "http://localhost:5248/api/stocks";
+
+      console.log("Request data:", stock); // Log the request data
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(stock),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error response text:", text); // Log the error response text
+        throw new Error("Network response was not ok");
+      }
+
+      const updatedStocks = await fetch(
+        "http://localhost:5248/api/stocks"
+      ).then((res) => res.json());
+      const stocksArray = updatedStocks.$values || updatedStocks;
+      const grouped = stocksArray.reduce(
+        (acc: Record<number, Stock[]>, stock: Stock) => {
+          if (!acc[stock.productId]) {
+            acc[stock.productId] = [];
+          }
+          acc[stock.productId].push(stock);
+          return acc;
+        },
+        {}
+      );
+      setGroupedStocks(grouped);
+    } catch (error) {
+      console.error("Error saving stock:", error);
+    }
+  };
+
+  const handleDeleteStock = async (stockId: number) => {
+    try {
+      await fetch(`http://localhost:5248/api/stocks/${stockId}`, {
+        method: "DELETE",
+      });
+
+      const updatedStocks = Object.values(groupedStocks)
+        .flat()
+        .filter((stock) => stock.id !== stockId);
+      const grouped = updatedStocks.reduce(
+        (acc: Record<number, Stock[]>, stock: Stock) => {
+          if (!acc[stock.productId]) {
+            acc[stock.productId] = [];
+          }
+          acc[stock.productId].push(stock);
+          return acc;
+        },
+        {}
+      );
+      setGroupedStocks(grouped);
+    } catch (error) {
+      console.error("Error deleting stock:", error);
+    }
+  };
+
   const handleRequestSort = (property: keyof Product | "amount" | "value") => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -308,6 +375,10 @@ const StockOverview: React.FC = () => {
               <StockDetails
                 stocks={groupedStocks[selectedProduct.id]}
                 locations={locations}
+                products={products}
+                onEdit={handleEditStock}
+                onConsume={handleConsumeSubmit}
+                onDelete={handleDeleteStock}
               />
             </DialogContent>
             <DialogActions>
