@@ -183,6 +183,50 @@ const StockOverview: React.FC = () => {
     }
   };
 
+  const handleConsumeStockEntry = async (
+    stockId: number,
+    amount: number,
+    consumeAll: boolean
+  ) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5248/api/stocks/consume-stock-entry/${stockId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(consumeAll ? 0 : amount),
+        }
+      );
+
+      if (response.ok) {
+        alert("Stock entry consumed successfully.");
+        // Refresh stocks data
+        const stocksResponse = await fetch("http://localhost:5248/api/stocks");
+        const stocksData = await stocksResponse.json();
+        console.log("Fetched stocks after consuming entry:", stocksData); // Log fetched stocks after consuming
+        const stocksArray = stocksData.$values || stocksData;
+        const grouped = stocksArray.reduce(
+          (acc: Record<number, Stock[]>, stock: Stock) => {
+            if (!acc[stock.productId]) {
+              acc[stock.productId] = [];
+            }
+            acc[stock.productId].push(stock);
+            return acc;
+          },
+          {}
+        );
+        setGroupedStocks(grouped);
+      } else {
+        alert("Failed to consume stock entry.");
+      }
+    } catch (error) {
+      console.error("Error consuming stock entry:", error);
+      alert("Failed to consume stock entry.");
+    }
+  };
+
   const handleEditStock = async (stock: Stock) => {
     try {
       const method = stock.id ? "PUT" : "POST";
@@ -377,7 +421,7 @@ const StockOverview: React.FC = () => {
                 locations={locations}
                 products={products}
                 onEdit={handleEditStock}
-                onConsume={handleConsumeSubmit}
+                onConsume={handleConsumeStockEntry}
                 onDelete={handleDeleteStock}
               />
             </DialogContent>

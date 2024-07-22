@@ -33,7 +33,7 @@ interface StockDetailsProps {
   locations: Location[];
   products: Product[];
   onEdit: (stock: Stock) => void;
-  onConsume: (stock: Stock, amount: number, consumeAll: boolean) => void;
+  onConsume: (stockId: number, amount: number, consumeAll: boolean) => void;
   onDelete: (stockId: number) => void;
 }
 
@@ -113,7 +113,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({
 
   const handleConsumeSubmit = () => {
     if (consumeStock) {
-      onConsume(consumeStock, consumeAmount, consumeAll);
+      onConsume(consumeStock.id, consumeAmount, consumeAll);
       handleConsumeClose();
     }
   };

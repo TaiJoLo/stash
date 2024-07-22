@@ -206,6 +206,39 @@ namespace Stash.Controllers
             return Ok();
         }
 
+        
+        [HttpPost("consume-stock-entry/{stockId}")]
+        public async Task<IActionResult> ConsumeStockEntry(int stockId, [FromBody] int amount)
+        {
+            var stock = await _stockRepository.GetStockByIdAsync(stockId);
+            if (stock == null)
+            {
+                return NotFound();
+            }
+
+            if (amount > stock.Amount)
+            {
+                return BadRequest("Not enough stock to consume the requested amount.");
+            }
+
+            stock.Amount -= amount;
+
+            await _stockRepository.UpdateStockAsync(stock);
+
+            // Log transaction
+            var transaction = new StockTransaction
+            {
+                StockId = stock.Id,
+                ProductName = stock.Product?.Name ?? "Unknown",
+                Amount = amount,
+                TransactionTime = DateTime.UtcNow,
+                TransactionType = "Consume"
+            };
+            await _stockTransactionRepository.AddTransactionAsync(transaction);
+
+            return Ok(stock);
+}
+
         // GET: api/stocks/transactions
         [HttpGet("transactions")]
         public async Task<ActionResult<IEnumerable<StockTransaction>>> GetStockTransactions()
