@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -27,13 +27,14 @@ import StockForm from "./StockForm";
 import { Stock } from "../Models/Stock";
 import { Location } from "../Models/Location";
 import { Product } from "../Models/Product";
+import { useNavigate } from "react-router-dom";
 
 interface StockDetailsProps {
   stocks: Stock[];
   locations: Location[];
   products: Product[];
   onEdit: (stock: Stock) => void;
-  onConsume: (stockId: number, amount: number, consumeAll: boolean) => void;
+  onConsume: (stockId: number, amount: number) => void;
   onDelete: (stockId: number) => void;
 }
 
@@ -58,29 +59,40 @@ const StockDetails: React.FC<StockDetailsProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteStockId, setDeleteStockId] = useState<number | null>(null);
 
+  const navigate = useNavigate();
+
   const handleRequestSort = (property: keyof Stock) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
-  const sortedStocks = stocks.slice().sort((a, b) => {
-    if (orderBy === "dueDate" || orderBy === "purchaseDate") {
-      const aValue = a[orderBy] ? new Date(a[orderBy]!).getTime() : 0;
-      const bValue = b[orderBy] ? new Date(b[orderBy]!).getTime() : 0;
+  const sortedStocks = stocks
+    .filter((stock) => stock.amount > 0) // Filter out stocks with amount 0
+    .slice()
+    .sort((a, b) => {
+      if (orderBy === "dueDate" || orderBy === "purchaseDate") {
+        const aValue = a[orderBy] ? new Date(a[orderBy]!).getTime() : 0;
+        const bValue = b[orderBy] ? new Date(b[orderBy]!).getTime() : 0;
+        return (aValue - bValue) * (order === "asc" ? 1 : -1);
+      }
+      if (orderBy === "locationId") {
+        const aLocation =
+          locations.find((loc) => loc.id === a.locationId)?.name || "";
+        const bLocation =
+          locations.find((loc) => loc.id === b.locationId)?.name || "";
+        return aLocation.localeCompare(bLocation) * (order === "asc" ? 1 : -1);
+      }
+      const aValue = a[orderBy];
+      const bValue = b[orderBy];
       return (aValue - bValue) * (order === "asc" ? 1 : -1);
+    });
+
+  useEffect(() => {
+    if (stocks.every((stock) => stock.amount === 0)) {
+      navigate("/stock-overview");
     }
-    if (orderBy === "locationId") {
-      const aLocation =
-        locations.find((loc) => loc.id === a.locationId)?.name || "";
-      const bLocation =
-        locations.find((loc) => loc.id === b.locationId)?.name || "";
-      return aLocation.localeCompare(bLocation) * (order === "asc" ? 1 : -1);
-    }
-    const aValue = a[orderBy];
-    const bValue = b[orderBy];
-    return (aValue - bValue) * (order === "asc" ? 1 : -1);
-  });
+  }, [stocks, navigate]);
 
   const handleEditClick = (stock: Stock) => {
     setEditStock(stock);
@@ -113,7 +125,7 @@ const StockDetails: React.FC<StockDetailsProps> = ({
 
   const handleConsumeSubmit = () => {
     if (consumeStock) {
-      onConsume(consumeStock.id, consumeAmount, consumeAll);
+      onConsume(consumeStock.id, consumeAmount);
       handleConsumeClose();
     }
   };

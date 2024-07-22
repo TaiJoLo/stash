@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Stash.Models;
 using Stash.Repositories;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Stash.Controllers
 {
@@ -30,7 +30,7 @@ namespace Stash.Controllers
             return Ok(stocks);
         }
 
-        // GET: api/stocks/5
+        // GET: api/stocks/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Stock>> GetStock(int id)
         {
@@ -63,7 +63,6 @@ namespace Stash.Controllers
 
             await _stockRepository.AddStockAsync(stock);
 
-            // Log transaction
             var transaction = new StockTransaction
             {
                 StockId = stock.Id,
@@ -77,7 +76,7 @@ namespace Stash.Controllers
             return CreatedAtAction(nameof(GetStock), new { id = stock.Id }, stock);
         }
 
-        // PUT: api/stocks/5
+        // PUT: api/stocks/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> PutStock(int id, Stock stock)
         {
@@ -115,7 +114,6 @@ namespace Stash.Controllers
 
             await _stockRepository.UpdateStockAsync(existingStock);
 
-            // Log transaction
             var transaction = new StockTransaction
             {
                 StockId = existingStock.Id,
@@ -129,35 +127,86 @@ namespace Stash.Controllers
             return NoContent();
         }
 
-        // DELETE: api/stocks/5
+        // DELETE: api/stocks/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStock(int id)
         {
-            var stock = await _stockRepository.GetStockByIdAsync(id);
-            if (stock == null)
+            try
             {
-                return NotFound();
+                var stock = await _stockRepository.GetStockByIdAsync(id);
+                if (stock == null)
+                {
+                    return NotFound();
+                }
+
+                await _stockRepository.DeleteStockAsync(id);
+
+                var transaction = new StockTransaction
+                {
+                    StockId = stock.Id,
+                    ProductName = stock.Product?.Name ?? "Unknown",
+                    Amount = -stock.Amount,
+                    TransactionTime = DateTime.UtcNow,
+                    TransactionType = "Delete"
+                };
+                await _stockTransactionRepository.AddTransactionAsync(transaction);
+
+                return NoContent();
             }
-
-            await _stockRepository.DeleteStockAsync(id);
-
-            // Log transaction
-            var transaction = new StockTransaction
+            catch (InvalidOperationException ex)
             {
-                StockId = stock.Id,
-                ProductName = stock.Product?.Name ?? "Unknown",
-                Amount = -stock.Amount, // Assuming amount is positive, -amount signifies deletion
-                TransactionTime = DateTime.UtcNow,
-                TransactionType = "Delete"
-            };
-            await _stockTransactionRepository.AddTransactionAsync(transaction);
-
-            return NoContent();
+                // Log the exception
+                Console.WriteLine($"Error deleting stock: {ex.Message}");
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error deleting stock: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // POST: api/stocks/consume-stock/{productId}
-        [HttpPost("consume-stock/{productId}")]
-        public async Task<IActionResult> ConsumeStock(int productId, [FromBody] int amount)
+        // POST: api/stocks/consume-stock-entry/{stockId}
+        [HttpPost("consume-stock-entry/{stockId}")]
+        public async Task<IActionResult> ConsumeStockEntry(int stockId, [FromBody] int amount)
+        {
+            try
+            {
+                var stock = await _stockRepository.GetStockByIdAsync(stockId);
+                if (stock == null || stock.Amount < amount)
+                {
+                    return BadRequest("Not enough stock to consume the requested amount.");
+                }
+
+                int originalAmount = stock.Amount;
+                stock.Amount -= amount;
+
+                await _stockRepository.UpdateStockAsync(stock);
+
+                var transaction = new StockTransaction
+                {
+                    StockId = stock.Id,
+                    ProductName = stock.Product?.Name ?? "Unknown",
+                    Amount = amount,
+                    TransactionTime = DateTime.UtcNow,
+                    TransactionType = "Consume"
+                };
+                await _stockTransactionRepository.AddTransactionAsync(transaction);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error consuming stock entry: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        // POST: api/stocks/consume-stock-product/{productId}
+        [HttpPost("consume-stock-product/{productId}")]
+        public async Task<IActionResult> ConsumeStockProduct(int productId, [FromBody] int amount)
         {
             var stocks = await _stockRepository.GetAllStocksAsync();
             var productStocks = stocks
@@ -205,39 +254,6 @@ namespace Stash.Controllers
 
             return Ok();
         }
-
-        
-        [HttpPost("consume-stock-entry/{stockId}")]
-        public async Task<IActionResult> ConsumeStockEntry(int stockId, [FromBody] int amount)
-        {
-            var stock = await _stockRepository.GetStockByIdAsync(stockId);
-            if (stock == null)
-            {
-                return NotFound();
-            }
-
-            if (amount > stock.Amount)
-            {
-                return BadRequest("Not enough stock to consume the requested amount.");
-            }
-
-            stock.Amount -= amount;
-
-            await _stockRepository.UpdateStockAsync(stock);
-
-            // Log transaction
-            var transaction = new StockTransaction
-            {
-                StockId = stock.Id,
-                ProductName = stock.Product?.Name ?? "Unknown",
-                Amount = amount,
-                TransactionTime = DateTime.UtcNow,
-                TransactionType = "Consume"
-            };
-            await _stockTransactionRepository.AddTransactionAsync(transaction);
-
-            return Ok(stock);
-}
 
         // GET: api/stocks/transactions
         [HttpGet("transactions")]
