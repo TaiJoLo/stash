@@ -125,8 +125,12 @@ const StockDetails: React.FC<StockDetailsProps> = ({
 
   const handleConsumeSubmit = () => {
     if (consumeStock) {
-      onConsume(consumeStock.id, consumeAmount);
+      const amountToConsume = consumeAll ? consumeStock.amount : consumeAmount;
+      onConsume(consumeStock.id, amountToConsume);
       handleConsumeClose();
+      if (stocks.every((stock) => stock.amount === 0)) {
+        navigate("/stock-overview");
+      }
     }
   };
 
