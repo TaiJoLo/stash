@@ -10,6 +10,7 @@ import {
   Container,
   Typography,
   TableSortLabel,
+  TablePagination,
 } from "@mui/material";
 
 interface StockTransaction {
@@ -48,6 +49,10 @@ const StockJournal: React.FC = () => {
   const [orderBy, setOrderBy] =
     useState<keyof StockTransaction>("transactionTime");
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -88,7 +93,20 @@ const StockJournal: React.FC = () => {
     setOrderBy(property);
   };
 
-  const sortedTransactions = transactions.sort(getComparator(order, orderBy));
+  const handleChangePage = (_event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to the first page
+  };
+
+  const sortedTransactions = transactions
+    .sort(getComparator(order, orderBy))
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Container>
@@ -157,6 +175,15 @@ const StockJournal: React.FC = () => {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={transactions.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
     </Container>
   );
