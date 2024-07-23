@@ -38,9 +38,13 @@ namespace Stash.Repositories
                 throw new ArgumentNullException(nameof(transaction));
             }
 
+            // Log the incoming transaction details
+            Console.WriteLine($"Received transaction for Stock ID: {transaction.StockId}, Amount: {transaction.Amount}, Type: {transaction.TransactionType}");
+
             var stock = await GetStockByIdAsync(transaction.StockId);
             if (stock == null)
             {
+                Console.WriteLine($"Stock with ID {transaction.StockId} not found.");
                 throw new InvalidOperationException("Invalid StockId");
             }
 
@@ -48,7 +52,9 @@ namespace Stash.Repositories
 
             _context.StockTransactions.Add(transaction);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"Transaction added for Stock ID: {transaction.StockId}");
         }
+
 
         private async Task<Stock?> GetStockByIdAsync(int stockId)
         {

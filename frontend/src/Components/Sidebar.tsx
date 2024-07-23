@@ -62,17 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           </ListItemIcon>
           <ListItemText primary="Category" />
         </ListItem>
-        <ListItem
-          button
-          component={NavLink}
-          to="/stocks"
-          onClick={handleLinkClick}
-        >
-          <ListItemIcon>
-            <Storage />
-          </ListItemIcon>
-          <ListItemText primary="Stock" />
-        </ListItem>
+
         <ListItem
           button
           component={NavLink}
@@ -98,12 +88,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
         <ListItem
           button
           component={NavLink}
+          to="/stocks"
+          onClick={handleLinkClick}
+        >
+          <ListItemIcon>
+            <Storage />
+          </ListItemIcon>
+          <ListItemText primary="Stock Entries" />
+        </ListItem>
+        <ListItem
+          button
+          component={NavLink}
           to="/stock-overview"
           onClick={handleLinkClick}
         >
           <ListItemIcon>
             <Assessment />
           </ListItemIcon>
+
           <ListItemText primary="Stock Overview" />
         </ListItem>
         <ListItem

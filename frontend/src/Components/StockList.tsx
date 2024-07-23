@@ -130,18 +130,19 @@ const StockList: React.FC = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (deleteStockId) {
+    if (deleteStockId !== null) {
       try {
         await fetch(`http://localhost:5248/api/stocks/${deleteStockId}`, {
           method: "DELETE",
         });
 
-        const updatedStocks = stocks.filter((s) => s.id !== deleteStockId);
-        setStocks(updatedStocks);
-
+        setStocks((prevStocks) =>
+          prevStocks.filter((stock) => stock.id !== deleteStockId)
+        );
+        console.log("Category deleted:", deleteStockId); // Debug log
         setDeleteStockId(null);
       } catch (error) {
-        console.error("Error deleting stock:", error);
+        console.error("Error deleting category:", error);
       }
     }
   };
@@ -274,8 +275,8 @@ const StockList: React.FC = () => {
                           )?.name
                         }
                       </TableCell>
-                      <TableCell>{stock.amount}</TableCell>
-                      <TableCell>{stock.unitPrice}</TableCell>
+                      <TableCell align="right">{stock.amount}</TableCell>
+                      <TableCell align="right">{stock.unitPrice}</TableCell>
                       <TableCell>
                         {stock.purchaseDate
                           ? new Date(stock.purchaseDate).toLocaleDateString()

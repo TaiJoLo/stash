@@ -133,14 +133,16 @@ namespace Stash.Controllers
         {
             try
             {
+                Console.WriteLine($"Received request to delete stock with ID: {id}");
+                
                 var stock = await _stockRepository.GetStockByIdAsync(id);
                 if (stock == null)
                 {
+                    Console.WriteLine($"Stock with ID: {id} not found");
                     return NotFound();
                 }
 
-                await _stockRepository.DeleteStockAsync(id);
-
+                // Create the transaction before deleting the stock
                 var transaction = new StockTransaction
                 {
                     StockId = stock.Id,
@@ -151,21 +153,26 @@ namespace Stash.Controllers
                 };
                 await _stockTransactionRepository.AddTransactionAsync(transaction);
 
+                await _stockRepository.DeleteStockAsync(id);
+                Console.WriteLine($"Deleted stock with ID: {id}");
+
                 return NoContent();
             }
             catch (InvalidOperationException ex)
             {
-                // Log the exception
                 Console.WriteLine($"Error deleting stock: {ex.Message}");
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                // Log the exception
                 Console.WriteLine($"Error deleting stock: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
+
+
+
+
 
         // POST: api/stocks/consume-stock-entry/{stockId}
         [HttpPost("consume-stock-entry/{stockId}")]

@@ -45,6 +45,7 @@ namespace Stash.Repositories
                 _context.Stocks.Remove(stock);
                 await _context.SaveChangesAsync();
             }
+            
         }
 
         public async Task<Location?> GetLocationByIdAsync(int id)
