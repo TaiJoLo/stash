@@ -12,9 +12,26 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
     });
 
-// Register DbContext with in-memory database
-builder.Services.AddDbContext<StashContext>(opt =>
-    opt.UseInMemoryDatabase("StashDatabase"));
+// Retrieve the connection string based on the environment
+var connection = string.Empty;
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
+    connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+}
+else
+{
+    connection = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
+}
+
+// Register DbContext with Azure SQL Database
+builder.Services.AddDbContext<StashContext>(options =>
+    options.UseSqlServer(connection));
+
+// Log the connection string to verify (should be disabled in production)
+builder.Logging.AddConsole().AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Information);
+
+Console.WriteLine($"Using connection string: {connection}");
 
 // Register Repositories
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -24,19 +41,19 @@ builder.Services.AddScoped<IParentProductRepository, ParentProductRepository>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 builder.Services.AddScoped<IStockTransactionRepository, StockTransactionRepository>();
 
-// Add Swagger services
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Add Swagger services (typically disabled in production)
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
 
-// Allow CORS
+// Allow CORS (configure as needed for production)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowAnyOrigin(); // For localhost only. Adjust as needed for production
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin(); // Adjust as needed for production
     });
 });
 

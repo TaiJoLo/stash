@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Stash.Models
 {
@@ -12,7 +13,9 @@ namespace Stash.Models
         public int Amount { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public DateTime? DueDate { get; set; }
-        public decimal UnitPrice { get; set; } 
+
+         [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitPrice { get; set; }
 
         // Navigation properties
         [JsonIgnore]
